@@ -358,7 +358,7 @@
         const body = document.createElement('div');
         body.style.cssText = 'font-size:14px;line-height:1.4;margin-bottom:12px;';
         body.className = 'luatools-status';
-        body.textContent = 'Working…';
+        body.textContent = lt('Working…');
 
         const progressWrap = document.createElement('div');
         progressWrap.style.cssText = 'background:#2a475e;height:10px;border-radius:4px;overflow:hidden;position:relative;display:none;';
@@ -377,13 +377,13 @@
         btnRow.style.cssText = 'margin-top:16px;display:flex;gap:8px;justify-content:flex-end;';
         const cancelBtn = document.createElement('a');
         cancelBtn.className = 'btnv6_blue_hoverfade btn_medium luatools-cancel-btn';
-        cancelBtn.innerHTML = '<span>Cancel</span>';
+        cancelBtn.innerHTML = '<span>' + lt('Cancel') + '</span>';
         cancelBtn.href = '#';
         cancelBtn.style.display = 'none';
         cancelBtn.onclick = function(e){ e.preventDefault(); cancelOperation(); };
         const hideBtn = document.createElement('a');
         hideBtn.className = 'btnv6_blue_hoverfade btn_medium luatools-hide-btn';
-        hideBtn.innerHTML = '<span>Hide</span>';
+        hideBtn.innerHTML = '<span>' + lt('Hide') + '</span>';
         hideBtn.href = '#';
         hideBtn.onclick = function(e){ e.preventDefault(); cleanup(); };
         btnRow.appendChild(cancelBtn);
@@ -412,11 +412,11 @@
             } catch(_) {}
             // Update UI to show cancelled
             const status = overlay.querySelector('.luatools-status');
-            if (status) status.textContent = 'Cancelled';
+            if (status) status.textContent = lt('Cancelled');
             const cancelBtn = overlay.querySelector('.luatools-cancel-btn');
             if (cancelBtn) cancelBtn.style.display = 'none';
             const hideBtn = overlay.querySelector('.luatools-hide-btn');
-            if (hideBtn) hideBtn.innerHTML = '<span>Close</span>';
+            if (hideBtn) hideBtn.innerHTML = '<span>' + lt('Close') + '</span>';
             // Hide progress UI
             const wrap = overlay.querySelector('.luatools-progress-wrap');
             const percent = overlay.querySelector('.luatools-percent');
@@ -925,7 +925,7 @@
                                 
                                 return; // Stop polling
                             } else if (state.status === 'failed') {
-                                if (msgEl) msgEl.textContent = 'Failed: ' + (state.error || 'Unknown error');
+                                if (msgEl) msgEl.textContent = lt('Failed: {error}').replace('{error}', state.error || lt('Unknown error'));
                                 // Change Hide button to Close button
                                 try {
                                     const btnRow = overlayEl.querySelector('div[style*="justify-content:flex-end"]');
@@ -933,7 +933,7 @@
                                         btnRow.innerHTML = '';
         const closeBtn = document.createElement('a');
         closeBtn.className = 'btnv6_blue_hoverfade btn_medium';
-        closeBtn.innerHTML = '<span>Close</span>';
+        closeBtn.innerHTML = '<span>' + lt('Close') + '</span>';
         closeBtn.href = '#';
                                         closeBtn.onclick = function(e){ e.preventDefault(); overlayEl.remove(); };
         btnRow.appendChild(closeBtn);
@@ -1302,18 +1302,18 @@
 
         const refreshBtn = document.createElement('a');
         refreshBtn.className = 'btnv6_blue_hoverfade btn_medium';
-        refreshBtn.innerHTML = '<span>Refresh</span>';
+        refreshBtn.innerHTML = '<span>' + t('settings.refresh', 'Refresh') + '</span>';
         refreshBtn.href = '#';
 
         const saveBtn = document.createElement('a');
         saveBtn.className = 'btnv6_blue_hoverfade btn_medium';
-        saveBtn.innerHTML = '<span>Save Settings</span>';
+        saveBtn.innerHTML = '<span>' + t('settings.save', 'Save Settings') + '</span>';
         saveBtn.href = '#';
         saveBtn.dataset.disabled = '1';
 
         const closeBtn = document.createElement('a');
         closeBtn.className = 'btnv6_blue_hoverfade btn_medium';
-        closeBtn.innerHTML = '<span>Close</span>';
+        closeBtn.innerHTML = '<span>' + t('settings.close', 'Close') + '</span>';
         closeBtn.href = '#';
 
         btnRow.appendChild(refreshBtn);
@@ -1574,7 +1574,7 @@
                     } else {
                         const unsupported = document.createElement('div');
                         unsupported.style.cssText = 'font-size:12px;color:#ffb347;';
-                        unsupported.textContent = 'Unsupported option type: ' + option.type;
+                        unsupported.textContent = lt('common.error.unsupportedOption').replace('{type}', option.type);
                         controlWrap.appendChild(unsupported);
                     }
 
@@ -1780,7 +1780,7 @@
         btnRow.style.cssText = 'margin-top:16px;display:flex;gap:8px;justify-content:flex-end;';
         const closeBtn = document.createElement('a');
         closeBtn.className = 'btnv6_blue_hoverfade btn_medium';
-        closeBtn.innerHTML = '<span>Close</span>';
+        closeBtn.innerHTML = '<span>' + lt('Close') + '</span>';
         closeBtn.href = '#';
         closeBtn.onclick = function(e){ e.preventDefault(); overlay.remove(); };
         btnRow.appendChild(closeBtn);
@@ -1877,7 +1877,8 @@
                             if (!pathPayload || !pathPayload.success) {
                                 // Game not installed or error - close menu and show error
                                 try { overlay.remove(); } catch(_) {}
-                            const errorMsg = (pathPayload && pathPayload.error) ? String(pathPayload.error) : lt('Could not find game installation');
+                            const errorKey = (pathPayload && pathPayload.error) ? String(pathPayload.error) : 'menu.error.noInstall';
+                            const errorMsg = (errorKey.startsWith('menu.error.') || errorKey.startsWith('common.')) ? t(errorKey) : errorKey;
                             try { ShowAlertDialog && ShowAlertDialog('LuaTools', errorMsg); } catch(_) { alert(errorMsg); }
                                 return;
                             }
@@ -2029,16 +2030,41 @@
 
     // Function to add the LuaTools button
     function addLuaToolsButton() {
+        // Track current URL to detect page changes
+        const currentUrl = window.location.href;
+        if (window.__LuaToolsLastUrl !== currentUrl) {
+            // Page changed - reset button insertion flag and update translations
+            window.__LuaToolsLastUrl = currentUrl;
+            window.__LuaToolsButtonInserted = false;
+            window.__LuaToolsRestartInserted = false;
+            window.__LuaToolsIconInserted = false;
+            window.__LuaToolsPresenceCheckInFlight = false;
+            window.__LuaToolsPresenceCheckAppId = undefined;
+            // Ensure translations are loaded and update existing buttons
+            ensureTranslationsLoaded(false).then(function() {
+                updateButtonTranslations();
+            });
+        }
+        
         // Look for the SteamDB buttons container
         const steamdbContainer = document.querySelector('.steamdb-buttons') || 
                                 document.querySelector('[data-steamdb-buttons]') ||
                                 document.querySelector('.apphub_OtherSiteInfo');
 
         if (steamdbContainer) {
+            // Always update translations for existing buttons (even if not a page change)
+            const existingBtn = document.querySelector('.luatools-button');
+            if (existingBtn) {
+                ensureTranslationsLoaded(false).then(function() {
+                    updateButtonTranslations();
+                });
+            }
+            
             // Check if button already exists to avoid duplicates
-            if (document.querySelector('.luatools-button') || window.__LuaToolsButtonInserted) {
+            if (existingBtn || window.__LuaToolsButtonInserted) {
                 if (!logState.existsOnce) { backendLog('LuaTools button already exists, skipping'); logState.existsOnce = true; }
-                // Even if LuaTools exists, ensure Restart button is present
+                // Even if LuaTools exists, ensure Restart button is present and translations are updated
+                return;
             }
 
             // Insert a Restart Steam button between Community Hub and our LuaTools button
@@ -2434,11 +2460,47 @@
     setTimeout(addLuaToolsButton, 1000);
     setTimeout(addLuaToolsButton, 3000);
     
+    // Listen for URL changes (Steam uses pushState for navigation)
+    let lastUrl = window.location.href;
+    function checkUrlChange() {
+        const currentUrl = window.location.href;
+        if (currentUrl !== lastUrl) {
+            lastUrl = currentUrl;
+            // URL changed - reset flags and update buttons
+            window.__LuaToolsButtonInserted = false;
+            window.__LuaToolsRestartInserted = false;
+            window.__LuaToolsIconInserted = false;
+            window.__LuaToolsPresenceCheckInFlight = false;
+            window.__LuaToolsPresenceCheckAppId = undefined;
+            // Update translations and re-add buttons
+            ensureTranslationsLoaded(false).then(function() {
+                updateButtonTranslations();
+                addLuaToolsButton();
+            });
+        }
+    }
+    // Check URL changes periodically and on popstate
+    setInterval(checkUrlChange, 500);
+    window.addEventListener('popstate', checkUrlChange);
+    // Override pushState/replaceState to detect navigation
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    history.pushState = function() {
+        originalPushState.apply(history, arguments);
+        setTimeout(checkUrlChange, 100);
+    };
+    history.replaceState = function() {
+        originalReplaceState.apply(history, arguments);
+        setTimeout(checkUrlChange, 100);
+    };
+    
     // Use MutationObserver to catch dynamically added content
     if (typeof MutationObserver !== 'undefined') {
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
                 if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    // Always update translations when DOM changes
+                    updateButtonTranslations();
                     addLuaToolsButton();
                 }
             });

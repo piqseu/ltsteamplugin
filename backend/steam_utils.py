@@ -192,7 +192,7 @@ def get_game_install_path_response(appid: int) -> Dict[str, any]:
 
     if not library_path or not appmanifest_path or not os.path.exists(appmanifest_path):
         logger.log(f"LuaTools: appmanifest not found for {appid} in any library")
-        return {"success": False, "error": "Game not installed! Add and install it first :D"}
+        return {"success": False, "error": "menu.error.notInstalled"}
 
     try:
         with open(appmanifest_path, "r", encoding="utf-8") as handle:
