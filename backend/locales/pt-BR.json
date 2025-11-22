@@ -9,7 +9,7 @@
     "Advanced": "Avançado",
     "All-In-One Fixes": "Correções all-in-one",
     "Apply": "Aplicar",
-    "Applying {fix}": "Aplicando {Correção}",
+    "Applying {fix}": "Aplicando {fix}",
     "Are you sure you want to un-fix? This will remove fix files and verify game files.": "Tem certeza de que deseja remover a correção? Isso removerá os arquivos da correção e verificará os arquivos do jogo.",
     "Back": "Voltar",
     "Cancel": "Cancelar",
@@ -130,4 +130,5 @@
     "Are you sure?": "Tem certeza?",
     "{fix} applied successfully!": "{fix} aplicado com sucesso!"
   }
+
 }
