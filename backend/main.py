@@ -28,7 +28,6 @@ from downloads import (
     dismiss_loaded_apps,
     get_add_status,
     get_icon_data_url,
-    get_installed_lua_scripts,
     has_luatools_for_app,
     read_loaded_apps,
     start_add_via_luatools,
@@ -38,7 +37,6 @@ from fixes import (
     cancel_apply_fix,
     check_for_fixes,
     get_apply_fix_status,
-    get_installed_fixes,
     get_unfix_status,
     unfix_game,
 )
@@ -185,20 +183,12 @@ def CancelApplyFix(appid: int, contentScriptQuery: str = "") -> str:
     return cancel_apply_fix(appid)
 
 
-def UnFixGame(appid: int, installPath: str = "", fixDate: str = "", contentScriptQuery: str = "") -> str:
-    return unfix_game(appid, installPath, fixDate)
+def UnFixGame(appid: int, installPath: str = "", contentScriptQuery: str = "") -> str:
+    return unfix_game(appid, installPath)
 
 
 def GetUnfixStatus(appid: int, contentScriptQuery: str = "") -> str:
     return get_unfix_status(appid)
-
-
-def GetInstalledFixes(contentScriptQuery: str = "") -> str:
-    return get_installed_fixes()
-
-
-def GetInstalledLuaScripts(contentScriptQuery: str = "") -> str:
-    return get_installed_lua_scripts()
 
 
 def GetGameInstallPath(appid: int, contentScriptQuery: str = "") -> str:

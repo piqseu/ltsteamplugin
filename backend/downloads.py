@@ -486,93 +486,15 @@ def cancel_add_via_luatools(appid: int) -> str:
     return json.dumps({"success": True})
 
 
-def get_installed_lua_scripts() -> str:
-    """Get list of all installed Lua scripts from stplug-in directory."""
-    try:
-        base_path = detect_steam_install_path() or Millennium.steam_path()
-        if not base_path:
-            return json.dumps({"success": False, "error": "Could not find Steam installation path"})
-
-        target_dir = os.path.join(base_path, "config", "stplug-in")
-        if not os.path.exists(target_dir):
-            return json.dumps({"success": True, "scripts": []})
-
-        installed_scripts = []
-
-        try:
-            for filename in os.listdir(target_dir):
-                # Match both enabled (.lua) and disabled (.lua.disabled) scripts
-                if filename.endswith(".lua") or filename.endswith(".lua.disabled"):
-                    try:
-                        # Extract appid from filename
-                        appid_str = filename.replace(".lua.disabled", "").replace(".lua", "")
-                        appid = int(appid_str)
-
-                        # Check if it's disabled
-                        is_disabled = filename.endswith(".lua.disabled")
-
-                        # Try to get game name from loaded_apps or fetch it
-                        game_name = _get_loaded_app_name(appid)
-                        if not game_name:
-                            game_name = _fetch_app_name(appid)
-                        if not game_name:
-                            game_name = f"Unknown Game ({appid})"
-
-                        # Get file stats
-                        file_path = os.path.join(target_dir, filename)
-                        file_stat = os.stat(file_path)
-                        file_size = file_stat.st_size
-
-                        # Format date
-                        import datetime
-                        modified_time = datetime.datetime.fromtimestamp(file_stat.st_mtime)
-                        formatted_date = modified_time.strftime("%Y-%m-%d %H:%M:%S")
-
-                        script_info = {
-                            "appid": appid,
-                            "gameName": game_name,
-                            "filename": filename,
-                            "isDisabled": is_disabled,
-                            "fileSize": file_size,
-                            "modifiedDate": formatted_date,
-                            "path": file_path
-                        }
-
-                        installed_scripts.append(script_info)
-                        logger.log(f"LuaTools: Found Lua script for appid {appid}: {game_name}")
-
-                    except ValueError:
-                        # Not a numeric filename, skip
-                        continue
-                    except Exception as exc:
-                        logger.warn(f"LuaTools: Failed to process Lua file {filename}: {exc}")
-                        continue
-
-        except Exception as exc:
-            logger.warn(f"LuaTools: Failed to scan stplug-in directory: {exc}")
-            return json.dumps({"success": False, "error": f"Failed to scan directory: {str(exc)}"})
-
-        # Sort by appid
-        installed_scripts.sort(key=lambda x: x["appid"])
-
-        logger.log(f"LuaTools: Found {len(installed_scripts)} installed Lua scripts")
-        return json.dumps({"success": True, "scripts": installed_scripts})
-
-    except Exception as exc:
-        logger.warn(f"LuaTools: Failed to get installed Lua scripts: {exc}")
-        return json.dumps({"success": False, "error": str(exc)})
-
-
 __all__ = [
-    "cancel_add_via_luatools",
     "delete_luatools_for_app",
     "dismiss_loaded_apps",
-    "fetch_app_name",
     "get_add_status",
     "get_icon_data_url",
-    "get_installed_lua_scripts",
     "has_luatools_for_app",
     "read_loaded_apps",
     "start_add_via_luatools",
+    "fetch_app_name",
+    "cancel_add_via_luatools",
 ]
 
