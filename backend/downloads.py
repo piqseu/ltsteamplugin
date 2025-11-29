@@ -38,6 +38,14 @@ APP_NAME_CACHE_LOCK = threading.Lock()
 LAST_API_CALL_TIME = 0
 API_CALL_MIN_INTERVAL = 0.3  # 300ms between calls to avoid 429 errors
 
+# In-memory applist for fallback app name lookup
+APPLIST_DATA: Dict[int, str] = {}
+APPLIST_LOADED = False
+APPLIST_LOCK = threading.Lock()
+APPLIST_FILE_NAME = "all-appids.json"
+APPLIST_URL = "https://applist.morrenus.xyz/"
+APPLIST_DOWNLOAD_TIMEOUT = 300  # 5 minutes for large file
+
 
 def _set_download_state(appid: int, update: dict) -> None:
     with DOWNLOAD_LOCK:
@@ -60,14 +68,31 @@ def _appid_log_path() -> str:
 
 
 def _fetch_app_name(appid: int) -> str:
-    """Fetch app name from Steam API with rate limiting and caching."""
+    """Fetch app name with rate limiting and caching.
+    
+    Fallback order:
+    1. In-memory cache
+    2. Applist file (in-memory) - checked before web requests
+    3. Steam API (web request as final resort)
+    """
     global LAST_API_CALL_TIME
 
     # Check cache first
     with APP_NAME_CACHE_LOCK:
         if appid in APP_NAME_CACHE:
-            return APP_NAME_CACHE[appid]
+            cached = APP_NAME_CACHE[appid]
+            if cached:  # Only return if not empty
+                return cached
 
+    # Check applist file before making web requests
+    applist_name = _get_app_name_from_applist(appid)
+    if applist_name:
+        # Cache the result from applist
+        with APP_NAME_CACHE_LOCK:
+            APP_NAME_CACHE[appid] = applist_name
+        return applist_name
+
+    # Steam API as final resort (web request)
     # Rate limiting: wait if needed
     with APP_NAME_CACHE_LOCK:
         time_since_last_call = time.time() - LAST_API_CALL_TIME
@@ -143,7 +168,7 @@ def _log_appid_event(action: str, appid: int, name: str) -> None:
 
 
 def _preload_app_names_cache() -> None:
-    """Pre-load all app names from loaded_apps and appidlogs files into memory cache."""
+    """Pre-load all app names from loaded_apps, appidlogs, and applist files into memory cache."""
     # First, load from appidlogs.txt (historical records)
     try:
         log_path = _appid_log_path()
@@ -198,20 +223,130 @@ def _preload_app_names_cache() -> None:
                             continue
     except Exception as exc:
         logger.warn(f"LuaTools: _preload_app_names_cache from loaded_apps failed: {exc}")
+    
+    # Finally, load from applist file (as fallback source - doesn't override existing cache)
+    # This ensures applist is available for lookups without web requests
+    try:
+        _load_applist_into_memory()
+    except Exception as exc:
+        logger.warn(f"LuaTools: _preload_app_names_cache from applist failed: {exc}")
 
 
 def _get_loaded_app_name(appid: int) -> str:
+    """Get app name from loadedappids.txt, with applist as fallback."""
     try:
         path = _loaded_apps_path()
-        if not os.path.exists(path):
-            return ""
-        with open(path, "r", encoding="utf-8") as handle:
-            for line in handle.read().splitlines():
-                if line.startswith(f"{appid}:"):
-                    return line.split(":", 1)[1].strip()
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as handle:
+                for line in handle.read().splitlines():
+                    if line.startswith(f"{appid}:"):
+                        name = line.split(":", 1)[1].strip()
+                        if name:
+                            return name
     except Exception:
-        return ""
-    return ""
+        pass
+    
+    # Fallback to applist if not found in loadedappids.txt
+    return _get_app_name_from_applist(appid)
+
+
+def _applist_file_path() -> str:
+    """Get the path to the applist JSON file."""
+    temp_dir = ensure_temp_download_dir()
+    return os.path.join(temp_dir, APPLIST_FILE_NAME)
+
+
+def _load_applist_into_memory() -> None:
+    """Load the applist JSON file into memory for fast lookups."""
+    global APPLIST_DATA, APPLIST_LOADED
+    
+    with APPLIST_LOCK:
+        if APPLIST_LOADED:
+            return
+        
+        file_path = _applist_file_path()
+        if not os.path.exists(file_path):
+            logger.log("LuaTools: Applist file not found, skipping load")
+            APPLIST_LOADED = True  # Mark as loaded to avoid repeated checks
+            return
+        
+        try:
+            logger.log("LuaTools: Loading applist into memory...")
+            with open(file_path, "r", encoding="utf-8") as handle:
+                data = json.load(handle)
+            
+            if isinstance(data, list):
+                count = 0
+                for entry in data:
+                    if isinstance(entry, dict):
+                        appid = entry.get("appid")
+                        name = entry.get("name")
+                        if appid and name and isinstance(name, str) and name.strip():
+                            APPLIST_DATA[int(appid)] = name.strip()
+                            count += 1
+                logger.log(f"LuaTools: Loaded {count} app names from applist into memory")
+            else:
+                logger.warn("LuaTools: Applist file has invalid format (expected array)")
+            
+            APPLIST_LOADED = True
+        except Exception as exc:
+            logger.warn(f"LuaTools: Failed to load applist into memory: {exc}")
+            APPLIST_LOADED = True  # Mark as loaded to avoid repeated failed attempts
+
+
+def _get_app_name_from_applist(appid: int) -> str:
+    """Get app name from in-memory applist."""
+    global APPLIST_DATA, APPLIST_LOADED
+    
+    # Ensure applist is loaded
+    if not APPLIST_LOADED:
+        _load_applist_into_memory()
+    
+    with APPLIST_LOCK:
+        return APPLIST_DATA.get(int(appid), "")
+
+
+def _ensure_applist_file() -> None:
+    """Download the applist file if it doesn't exist."""
+    file_path = _applist_file_path()
+    
+    if os.path.exists(file_path):
+        logger.log("LuaTools: Applist file already exists, skipping download")
+        return
+    
+    logger.log("LuaTools: Applist file not found, downloading...")
+    client = ensure_http_client("LuaTools: DownloadApplist")
+    
+    try:
+        resp = client.get(APPLIST_URL, follow_redirects=True, timeout=APPLIST_DOWNLOAD_TIMEOUT)
+        resp.raise_for_status()
+        
+        # Validate JSON format before saving
+        try:
+            data = resp.json()
+            if not isinstance(data, list):
+                logger.warn("LuaTools: Downloaded applist has invalid format (expected array)")
+                return
+        except json.JSONDecodeError as exc:
+            logger.warn(f"LuaTools: Downloaded applist is not valid JSON: {exc}")
+            return
+        
+        # Save to file
+        with open(file_path, "w", encoding="utf-8") as handle:
+            json.dump(data, handle)
+        
+        logger.log(f"LuaTools: Successfully downloaded and saved applist file ({len(data)} entries)")
+    except Exception as exc:
+        logger.warn(f"LuaTools: Failed to download applist file: {exc}")
+
+
+def init_applist() -> None:
+    """Initialize the applist system: download if needed, then load into memory."""
+    try:
+        _ensure_applist_file()
+        _load_applist_into_memory()
+    except Exception as exc:
+        logger.warn(f"LuaTools: Applist initialization failed: {exc}")
 
 
 def fetch_app_name(appid: int) -> str:
@@ -611,6 +746,11 @@ def get_installed_lua_scripts() -> str:
                         if not game_name:
                             game_name = _get_loaded_app_name(appid)
 
+                        # Fallback to applist if still not found (no web request)
+                        # Note: _get_loaded_app_name already checks applist, but check again here for clarity
+                        if not game_name:
+                            game_name = _get_app_name_from_applist(appid)
+
                         # Only use "Unknown Game" as last resort - don't fetch from API
                         if not game_name:
                             game_name = f"Unknown Game ({appid})"
@@ -667,6 +807,7 @@ __all__ = [
     "get_icon_data_url",
     "get_installed_lua_scripts",
     "has_luatools_for_app",
+    "init_applist",
     "read_loaded_apps",
     "start_add_via_luatools",
 ]

@@ -1866,6 +1866,16 @@
                                     container.innerHTML = '<div style="padding:14px;background:#102039;border:1px solid #2a475e;border-radius:4px;color:#c7d5e0;text-align:center;">' + t('settings.installedFixes.empty', 'No fixes installed yet.') + '</div>';
                                 }
                             }, 300);
+                            
+                            // Trigger Steam verification after a short delay
+                            setTimeout(function(){
+                                try {
+                                    const verifyUrl = 'steam://validate/' + appid;
+                                    window.location.href = verifyUrl;
+                                    backendLog('LuaTools: Running verify for appid ' + appid);
+                                } catch(_) {}
+                            }, 1000);
+                            
                             return;
                         } else if (status === 'failed' || (status === 'done' && !state.success)) {
                             alert(t('settings.installedFixes.deleteError', 'Failed to remove fix.') + ' ' + (state.error || ''));
@@ -2013,7 +2023,7 @@
 
                 showLuaToolsConfirm(
                     script.gameName || 'LuaTools',
-                    t('settings.installedLua.deleteConfirm', 'Are you sure you want to remove this Lua script?'),
+                    t('settings.installedLua.deleteConfirm', 'Remove via LuaTools for this game?'),
                     function() {
                         // User confirmed
                         deleteBtn.dataset.busy = '1';

@@ -30,6 +30,7 @@ from downloads import (
     get_icon_data_url,
     get_installed_lua_scripts,
     has_luatools_for_app,
+    init_applist,
     read_loaded_apps,
     start_add_via_luatools,
 )
@@ -385,6 +386,11 @@ class Plugin:
                 store_last_message(message)
         except Exception as exc:
             logger.warn(f"AutoUpdate: apply pending failed: {exc}")
+
+        try:
+            init_applist()
+        except Exception as exc:
+            logger.warn(f"LuaTools: Applist initialization failed: {exc}")
 
         _copy_webkit_files()
         _inject_webkit_files()

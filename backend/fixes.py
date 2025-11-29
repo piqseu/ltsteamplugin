@@ -67,7 +67,7 @@ def check_for_fixes(appid: int) -> str:
         result["gameName"] = f"Unknown Game ({appid})"
 
     try:
-        generic_url = f"https://github.com/ShayneVi/Bypasses/releases/download/v1.0/{appid}.zip"
+        generic_url = f"https://files.luatools.work/GameBypasses/{appid}.zip"
         resp = client.head(generic_url, follow_redirects=True, timeout=10)
         result["genericFix"]["status"] = resp.status_code
         result["genericFix"]["available"] = resp.status_code == 200
@@ -77,26 +77,18 @@ def check_for_fixes(appid: int) -> str:
     except Exception as exc:
         logger.warn(f"LuaTools: Generic fix check failed for {appid}: {exc}")
 
-    online_urls = [
-        f"https://github.com/ShayneVi/OnlineFix1/releases/download/fixes/{appid}.zip",
-        f"https://github.com/ShayneVi/OnlineFix2/releases/download/fixes/{appid}.zip",
-    ]
-
-    for online_url in online_urls:
-        try:
-            resp = client.head(online_url, follow_redirects=True, timeout=10)
-            logger.log(f"LuaTools: Online-fix check ({online_url}) for {appid} -> {resp.status_code}")
-            if resp.status_code == 200:
-                result["onlineFix"]["status"] = resp.status_code
-                result["onlineFix"]["available"] = True
-                result["onlineFix"]["url"] = online_url
-                break
-            elif result["onlineFix"]["status"] == 0:
-                result["onlineFix"]["status"] = resp.status_code
-        except Exception as exc:
-            logger.warn(f"LuaTools: Online-fix check failed for {online_url}: {exc}")
-            if result["onlineFix"]["status"] == 0:
-                result["onlineFix"]["status"] = 0
+    try:
+        online_url = f"https://files.luatools.work/OnlineFix1/{appid}.zip"
+        resp = client.head(online_url, follow_redirects=True, timeout=10)
+        logger.log(f"LuaTools: Online-fix check ({online_url}) for {appid} -> {resp.status_code}")
+        result["onlineFix"]["status"] = resp.status_code
+        result["onlineFix"]["available"] = resp.status_code == 200
+        if resp.status_code == 200:
+            result["onlineFix"]["url"] = online_url
+    except Exception as exc:
+        logger.warn(f"LuaTools: Online-fix check failed for {appid}: {exc}")
+        if result["onlineFix"]["status"] == 0:
+            result["onlineFix"]["status"] = 0
 
     return json.dumps(result)
 
