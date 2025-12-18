@@ -635,7 +635,7 @@
         window.__LuaToolsI18n = stored;
     }
 
-    // Theme definitions (i'm sorry in advance LMFAO) (nah castle imagine using inline css smh my head)
+    // Theme definitions (pulled from themes.json; inline only used as fallback)
     const DEFAULT_THEMES = {
         original: {
             name: 'Original',
@@ -656,229 +656,94 @@
             gradientLight: 'linear-gradient(135deg, #a4d7f5 0%, #7dd4ff 100%)',
             shadow: 'rgba(102,192,244,0.4)',
             shadowHover: 'rgba(102,192,244,0.6)',
-        },
-        dark: {
-            name: 'Dark',
-            bgPrimary: '#1a1a1a',
-            bgSecondary: '#2a2a2a',
-            bgTertiary: 'rgba(15, 15, 15, 0.95)',
-            bgHover: 'rgba(26, 26, 26, 0.95)',
-            bgContainer: 'rgba(15,15,15,0.6)',
-            bgContainerGradient: 'rgba(15, 15, 15, 0.85), #0f0f0f',
-            accent: '#888888',
-            accentLight: '#aaaaaa',
-            accentDark: '#666666',
-            border: 'rgba(136, 136, 136, 0.3)',
-            borderHover: 'rgba(136, 136, 136, 0.8)',
-            text: '#fff',
-            textSecondary: '#c7d5e0',
-            gradient: 'linear-gradient(135deg, #aaaaaa 0%, #888888 100%)',
-            gradientLight: 'linear-gradient(135deg, #cccccc 0%, #aaaaaa 100%)',
-            shadow: 'rgba(136, 136, 136, 0.4)',
-            shadowHover: 'rgba(136, 136, 136, 0.6)',
-        },
-        light: {
-            name: 'Light',
-            bgPrimary: '#f5f5f5',
-            bgSecondary: '#ffffff',
-            bgTertiary: 'rgba(255, 255, 255, 0.95)',
-            bgHover: 'rgba(240, 240, 240, 0.95)',
-            bgContainer: 'rgba(230, 230, 235, 0.8)',
-            bgContainerGradient: 'rgba(245, 245, 250, 0.95), #f5f5f5',
-            accent: '#0056b3',
-            accentLight: '#0077e6',
-            accentDark: '#003d82',
-            border: 'rgba(0, 86, 179, 0.4)',
-            borderHover: 'rgba(0, 86, 179, 0.8)',
-            text: '#1a202c',
-            textSecondary: '#4a5568',
-            gradient: 'linear-gradient(135deg, #0077e6 0%, #0056b3 100%)',
-            gradientLight: 'linear-gradient(135deg, #0099ff 0%, #0077e6 100%)',
-            shadow: 'rgba(0, 86, 179, 0.25)',
-            shadowHover: 'rgba(0, 86, 179, 0.4)',
-        },
-        purple: {
-            name: 'Purple',
-            bgPrimary: '#1a1a1a',
-            bgSecondary: '#2a2a2a',
-            bgTertiary: 'rgba(15, 15, 15, 0.95)',
-            bgHover: 'rgba(26, 26, 26, 0.95)',
-            bgContainer: 'rgba(15,15,15,0.6)',
-            bgContainerGradient: 'rgba(15, 15, 15, 0.85), #0f0f0f',
-            accent: '#a78bfa',
-            accentLight: '#c4b5fd',
-            accentDark: '#8b5cf6',
-            border: 'rgba(167, 139, 250, 0.3)',
-            borderHover: 'rgba(167, 139, 250, 0.8)',
-            text: '#fff',
-            textSecondary: '#c7d5e0',
-            gradient: 'linear-gradient(135deg, #c4b5fd 0%, #a78bfa 100%)',
-            gradientLight: 'linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%)',
-            shadow: 'rgba(167, 139, 250, 0.4)',
-            shadowHover: 'rgba(167, 139, 250, 0.6)',
-        },
-        space: {
-            name: 'Space',
-            bgPrimary: '#0a0e27',
-            bgSecondary: '#1a1f3a',
-            bgTertiary: 'rgba(10, 14, 39, 0.95)',
-            bgHover: 'rgba(26, 31, 58, 0.95)',
-            bgContainer: 'rgba(10,14,39,0.8)',
-            bgContainerGradient: 'rgba(10, 14, 39, 0.9), #0a0e27',
-            accent: '#6366f1',
-            accentLight: '#818cf8',
-            accentDark: '#4f46e5',
-            border: 'rgba(99, 102, 241, 0.3)',
-            borderHover: 'rgba(99, 102, 241, 0.8)',
-            text: '#fff',
-            textSecondary: '#e0e7ff',
-            gradient: 'linear-gradient(135deg, #818cf8 0%, #6366f1 100%)',
-            gradientLight: 'linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)',
-            shadow: 'rgba(99, 102, 241, 0.4)',
-            shadowHover: 'rgba(99, 102, 241, 0.6)',
-        },
-        ocean: {
-            name: 'Ocean',
-            bgPrimary: '#0f172a',
-            bgSecondary: '#1e293b',
-            bgTertiary: 'rgba(15, 23, 42, 0.95)',
-            bgHover: 'rgba(30, 41, 59, 0.95)',
-            bgContainer: 'rgba(15,23,42,0.8)',
-            bgContainerGradient: 'rgba(15, 23, 42, 0.9), #0f172a',
-            accent: '#06b6d4',
-            accentLight: '#22d3ee',
-            accentDark: '#0891b2',
-            border: 'rgba(6, 182, 212, 0.3)',
-            borderHover: 'rgba(6, 182, 212, 0.8)',
-            text: '#fff',
-            textSecondary: '#cbd5e1',
-            gradient: 'linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)',
-            gradientLight: 'linear-gradient(135deg, #67e8f9 0%, #22d3ee 100%)',
-            shadow: 'rgba(6, 182, 212, 0.4)',
-            shadowHover: 'rgba(6, 182, 212, 0.6)',
-        },
-        forest: {
-            name: 'Forest',
-            bgPrimary: '#0f1f0f',
-            bgSecondary: '#1a2e1a',
-            bgTertiary: 'rgba(15, 31, 15, 0.95)',
-            bgHover: 'rgba(26, 46, 26, 0.95)',
-            bgContainer: 'rgba(15,31,15,0.8)',
-            bgContainerGradient: 'rgba(15, 31, 15, 0.9), #0f1f0f',
-            accent: '#10b981',
-            accentLight: '#34d399',
-            accentDark: '#059669',
-            border: 'rgba(16, 185, 129, 0.3)',
-            borderHover: 'rgba(16, 185, 129, 0.8)',
-            text: '#fff',
-            textSecondary: '#d1fae5',
-            gradient: 'linear-gradient(135deg, #34d399 0%, #10b981 100%)',
-            gradientLight: 'linear-gradient(135deg, #6ee7b7 0%, #34d399 100%)',
-            shadow: 'rgba(16, 185, 129, 0.4)',
-            shadowHover: 'rgba(16, 185, 129, 0.6)',
-        },
-        rosepine: {
-            name: 'Rose Pine',
-            bgPrimary: '#191724',
-            bgSecondary: '#26233a',
-            bgTertiary: 'rgba(25, 23, 36, 0.95)',
-            bgHover: 'rgba(38, 35, 58, 0.95)',
-            bgContainer: 'rgba(25,23,36,0.8)',
-            bgContainerGradient: 'rgba(25, 23, 36, 0.9), #191724',
-            accent: '#ea9a97',
-            accentLight: '#f5e0dc',
-            accentDark: '#d08080',
-            border: 'rgba(234, 154, 151, 0.3)',
-            borderHover: 'rgba(234, 154, 151, 0.8)',
-            text: '#e0def4',
-            textSecondary: '#c4b1cd',
-            gradient: 'linear-gradient(135deg, #f5e0dc 0%, #ea9a97 100%)',
-            gradientLight: 'linear-gradient(135deg, #f6c177 0%, #f5e0dc 100%)',
-            shadow: 'rgba(234, 154, 151, 0.4)',
-            shadowHover: 'rgba(234, 154, 151, 0.6)',
-        },
-        catppuccin: {
-            name: 'Catppuccin',
-            bgPrimary: '#1e1e2e',
-            bgSecondary: '#313244',
-            bgTertiary: 'rgba(30, 30, 46, 0.95)',
-            bgHover: 'rgba(49, 50, 68, 0.95)',
-            bgContainer: 'rgba(30,30,46,0.8)',
-            bgContainerGradient: 'rgba(30, 30, 46, 0.9), #1e1e2e',
-            accent: '#89b4fa',
-            accentLight: '#cba6f7',
-            accentDark: '#74c7ec',
-            border: 'rgba(137, 180, 250, 0.3)',
-            borderHover: 'rgba(137, 180, 250, 0.8)',
-            text: '#cdd6f4',
-            textSecondary: '#b6bfe8',
-            gradient: 'linear-gradient(135deg, #cba6f7 0%, #89b4fa 100%)',
-            gradientLight: 'linear-gradient(135deg, #f38ba8 0%, #cba6f7 100%)',
-            shadow: 'rgba(137, 180, 250, 0.4)',
-            shadowHover: 'rgba(137, 180, 250, 0.6)',
-        },
-        dracula: {
-            name: 'Dracula',
-            bgPrimary: '#282a36',
-            bgSecondary: '#44475a',
-            bgTertiary: 'rgba(40, 42, 54, 0.95)',
-            bgHover: 'rgba(68, 71, 90, 0.95)',
-            bgContainer: 'rgba(40,42,54,0.8)',
-            bgContainerGradient: 'rgba(40, 42, 54, 0.9), #282a36',
-            accent: '#ff79c6',
-            accentLight: '#f1fa8c',
-            accentDark: '#ff92df',
-            border: 'rgba(255, 121, 198, 0.3)',
-            borderHover: 'rgba(255, 121, 198, 0.8)',
-            text: '#f8f8f2',
-            textSecondary: '#e0e0e0',
-            gradient: 'linear-gradient(135deg, #ff79c6 0%, #bd93f9 100%)',
-            gradientLight: 'linear-gradient(135deg, #8be9fd 0%, #ff79c6 100%)',
-            shadow: 'rgba(255, 121, 198, 0.4)',
-            shadowHover: 'rgba(255, 121, 198, 0.6)',
-        },
+        }
     };
 
-    // Runtime THEMES map — start with defaults, then attempt to load canonical palettes from the backend.
+    // Runtime THEMES map - start with fallback, then hydrate from themes.json/backend.
     let THEMES = DEFAULT_THEMES;
+
+    function normalizeThemesPayload(input) {
+        try {
+            let payload = input;
+            if (typeof payload === 'string') payload = JSON.parse(payload);
+            if (payload && typeof payload === 'object') {
+                if (Array.isArray(payload.themes)) return payload.themes;
+                if (Array.isArray(payload.result)) return payload.result;
+                if (payload.result && Array.isArray(payload.result.themes)) return payload.result.themes;
+                if (Array.isArray(payload.value)) return payload.value;
+            }
+            if (Array.isArray(payload)) return payload;
+        } catch (_) { /* ignore */ }
+        return [];
+    }
 
     function _applyBackendThemes(themesArray) {
         try {
-            if (!Array.isArray(themesArray)) return;
+            const themes = normalizeThemesPayload(themesArray);
+            if (!Array.isArray(themes) || themes.length === 0) return;
             const map = {};
-            themesArray.forEach(function (t) {
-                if (!t || !t.value) return;
-                map[t.value] = Object.assign({}, t, { name: t.name || t.value });
+            themes.forEach(function (t) {
+                if (!t || (!t.value && !t.key)) return;
+                const key = t.value || t.key;
+                map[key] = Object.assign({}, t, { value: key, name: t.name || key });
             });
+            if (Object.keys(map).length === 0) return;
             THEMES = Object.assign({}, DEFAULT_THEMES, map);
+            try { ensureLuaToolsStyles(); } catch(_) {}
         } catch (e) {
             console.warn('Failed to apply backend themes', e);
         }
     }
 
+    function loadThemesFromFile() {
+        try {
+            return fetch('themes/themes.json', { cache: 'no-store' }).then(function (res) {
+                if (!res || !res.ok) return null;
+                return res.json();
+            }).then(function (json) {
+                if (!json) return null;
+                _applyBackendThemes(json);
+                return json;
+            }).catch(function () { return null; });
+        } catch (_) {
+            return Promise.resolve(null);
+        }
+    }
+
     function loadThemesFromBackend() {
-        if (typeof Millennium === 'undefined' || typeof Millennium.callServerMethod !== 'function') return Promise.resolve();
+        if (typeof Millennium === 'undefined' || typeof Millennium.callServerMethod !== 'function') {
+            return Promise.resolve(null);
+        }
         return Millennium.callServerMethod('luatools', 'GetThemes', { contentScriptQuery: '' }).then(function (res) {
-            try {
-                var payload = (res && (res.result || res.value)) || res;
-                if (typeof payload === 'string') payload = JSON.parse(payload);
-                if (Array.isArray(payload)) _applyBackendThemes(payload);
-                return payload;
-            } catch (e) {
-                console.warn('GetThemes parse failed', e);
-            }
-        }).catch(function () { /* ignore */ });
+            _applyBackendThemes(res);
+            return res;
+        }).catch(function () { return null; });
+    }
+
+    function loadThemes() {
+        return Promise.all([
+            loadThemesFromFile(),
+            loadThemesFromBackend()
+        ]).catch(function () { /* ignore */ });
     }
 
     // Trigger load (non-blocking). Keeps DEFAULT_THEMES as a safe fallback.
-    loadThemesFromBackend();
+    const themeLoadPromise = loadThemes();
 
-    function getCurrentTheme() {
+    function getCurrentThemeKey() {
         try {
             const settings = window.__LuaToolsSettings || {};
             const themeKey = (settings.values || {}).general || {};
-            const theme = themeKey.theme || 'original';
-            return THEMES[theme] || THEMES.original;
+            return themeKey.theme || 'original';
+        } catch (e) {
+            return 'original';
+        }
+    }
+
+    function getCurrentTheme() {
+        try {
+            const themeName = getCurrentThemeKey();
+            return THEMES[themeName] || THEMES.original;
         } catch (e) {
             return THEMES.original;
         }
@@ -1034,11 +899,35 @@
         `;
     }
 
+    function ensureThemeStylesheet(themeKey) {
+        const id = 'luatools-theme-css';
+        const href = 'themes/' + themeKey + '.css';
+        const link = document.getElementById(id);
+        if (link) {
+            const currentTheme = link.getAttribute('data-theme');
+            if (currentTheme === themeKey) return;
+            link.href = href;
+            link.setAttribute('data-theme', themeKey);
+            return;
+        }
+        try {
+            const el = document.createElement('link');
+            el.id = id;
+            el.rel = 'stylesheet';
+            el.href = href;
+            el.setAttribute('data-theme', themeKey);
+            document.head.appendChild(el);
+        } catch(err) { backendLog('LuaTools: Theme CSS injection failed: ' + err); }
+    }
+
     function ensureLuaToolsStyles() {
         const styleEl = document.getElementById('luatools-styles');
+        const themeKey = getCurrentThemeKey();
         const theme = getCurrentTheme();
         const styles = generateThemeStyles(theme);
-        
+
+        try { ensureThemeStylesheet(themeKey); } catch(_) {}
+
         if (styleEl) {
             styleEl.textContent = styles;
             return;
