@@ -127,6 +127,22 @@
         animationFrameId: null
     };
 
+    // duplicated from main code thing for reliability
+    function isBigPictureMode() {
+        if (typeof window.__LUATOOLS_IS_BIG_PICTURE__ !== 'undefined') {
+            return window.__LUATOOLS_IS_BIG_PICTURE__;
+        }
+        const htmlClasses = document.documentElement.className;
+        const userAgent = navigator.userAgent;
+        let score = 0;
+        if (htmlClasses.includes('BasicUI')) score += 3;
+        if (htmlClasses.includes('DesktopUI')) score -= 3;
+        if (userAgent.includes('Valve Steam Gamepad')) score += 2;
+        if (userAgent.includes('Valve Steam Client')) score -= 2;
+        if (htmlClasses.includes('touch')) score += 1;
+        return score > 0;
+    }
+
     // B button handler removed - users should use the modal buttons directly
     // This prevents conflicts with Steam's back navigation
     let onBackHandler = function() {
@@ -158,6 +174,8 @@
     }
 
     function scanFocusableElements() {
+        if (!isBigPictureMode()) return;
+
         // Only scan if there's a LuaTools overlay active
         const activeOverlay = document.querySelector(OVERLAY_SELECTOR_STRING);
 
@@ -451,6 +469,11 @@
     }
 
     function init() {
+        if (!isBigPictureMode()) {
+            console.log('[Gamepad] Not in Big Picture Mode, skipping initialization');
+            return;
+        }
+
         console.log('[Gamepad] Initializing Gamepad Navigation System...');
 
         window.addEventListener('gamepadconnected', onGamepadConnected);
@@ -3918,8 +3941,8 @@
                                 // Insert after icon button (order: Restart → Icon → Add)
                                 const iconExisting = steamdbContainer.querySelector('.luatools-icon-button');
                                 const restartExisting = steamdbContainer.querySelector('.luatools-restart-button');
-                                if (iconExisting && iconExisting.after) {
-                                    iconExisting.after(luatoolsButton);
+                                if (iconExisting && iconExisting.before) {
+                                    iconExisting.before(luatoolsButton);
                                 } else if (restartExisting && restartExisting.after) {
                                     restartExisting.after(luatoolsButton);
                                 } else if (referenceBtn && referenceBtn.after) {
@@ -3993,66 +4016,62 @@
                         }
                         
                         const key = String(appid);
-                        if (!db || !db[key]) {
-                            const newContent = 'untested';
-                            if (pillsContainer.dataset.content === newContent) return;
-                            pillsContainer.dataset.content = newContent;
-                            pillsContainer.innerHTML = '';
-                            
+                        const gameData = (db && db[key]) ? db[key] : null;
+                        
+                        // check denuvo
+                        const drmNotice = document.querySelector('.DRM_notice');
+                        const hasDenuvo = drmNotice && drmNotice.textContent.includes('Denuvo');
+
+                        const cacheKey = JSON.stringify({
+                            d: gameData || 'untested',
+                            denuvo: hasDenuvo
+                        });
+
+                        if (pillsContainer.dataset.content === cacheKey) return;
+                        pillsContainer.dataset.content = cacheKey;
+                        
+                        pillsContainer.innerHTML = '';
+
+                        if (!gameData) {
                             const pill = document.createElement('span');
                             pill.className = 'luatools-pill gray';
                             pill.textContent = 'Untested';
                             pillsContainer.appendChild(pill);
-                            return;
-                        }
-                        
-                        const gameData = db[key];
-                        const newContent = JSON.stringify(gameData);
-                        if (pillsContainer.dataset.content === newContent) return;
-                        pillsContainer.dataset.content = newContent;
-                        
-                        pillsContainer.innerHTML = '';
-
-                        if (typeof gameData.playable !== 'undefined') {
-                            const pill = document.createElement('span');
-                            pill.className = 'luatools-pill';
-                            
-                            // reset button state first
-                            const btn = steamdbContainer.querySelector('.luatools-button');
-                            if (btn) {
-                                btn.style.opacity = '';
-                                btn.style.pointerEvents = '';
-                                btn.style.cursor = '';
-                                const span = btn.querySelector('span');
-                                if (span && span.textContent === 'Unplayable') {
-                                    span.textContent = lt('Add via LuaTools');
+                        } else {
+                            if (typeof gameData.playable !== 'undefined') {
+                                const pill = document.createElement('span');
+                                pill.className = 'luatools-pill';
+                                
+                                // reset button state first
+                                const btn = steamdbContainer.querySelector('.luatools-button');
+                                if (btn) {
+                                    btn.style.opacity = '';
+                                    btn.style.pointerEvents = '';
+                                    btn.style.cursor = '';
+                                    const span = btn.querySelector('span');
+                                    if (span && span.textContent === 'Unplayable') {
+                                        span.textContent = lt('Add via LuaTools');
+                                    }
                                 }
-                            }
 
-                            if (gameData.playable === 0) {
-                                pill.classList.add('red');
-                                pill.textContent = 'Unplayable';
-                            } else if (gameData.playable === 1) {
-                                pill.classList.add('green');
-                                pill.textContent = 'Playable';
-                            } else if (gameData.playable === 2) {
-                                pill.classList.add('yellow');
-                                pill.textContent = 'Needs fixes';
+                                if (gameData.playable === 0) {
+                                    pill.classList.add('red');
+                                    pill.textContent = 'Unplayable';
+                                } else if (gameData.playable === 1) {
+                                    pill.classList.add('green');
+                                    pill.textContent = 'Playable';
+                                } else if (gameData.playable === 2) {
+                                    pill.classList.add('yellow');
+                                    pill.textContent = 'Needs fixes';
+                                }
+                                pillsContainer.appendChild(pill);
                             }
-                            pillsContainer.appendChild(pill);
                         }
 
-                        if (gameData.denuvo) {
+                        if (hasDenuvo) {
                             const pill = document.createElement('span');
                             pill.className = 'luatools-pill orange';
                             pill.textContent = 'Denuvo';
-                            pillsContainer.appendChild(pill);
-                        }
-
-                        if (gameData['of-available']) {
-                            const pill = document.createElement('span');
-                            pill.className = 'luatools-pill green';
-                            pill.textContent = 'Online-fix';
                             pillsContainer.appendChild(pill);
                         }
                     });
