@@ -719,22 +719,42 @@
         }
     }
 
-    function loadThemes() {
-        // Load themes from local JSON file only (no backend call needed for static data)
+    function loadThemesFromFile() {
         try {
-            return fetch('themes/themes.json', { cache: 'no-store' })
-                .then(function(res) {
-                    if (!res || !res.ok) return null;
-                    return res.json();
-                })
-                .then(function(json) {
-                    if (json) _applyBackendThemes(json);
-                    return json;
-                })
-                .catch(function() { return null; });
+            return fetch('themes/themes.json', { cache: 'no-store' }).then(function (res) {
+                if (!res || !res.ok) return null;
+                return res.json();
+            }).then(function (json) {
+                if (!json) return null;
+                _applyBackendThemes(json);
+                return json;
+            }).catch(function () { return null; });
         } catch (_) {
             return Promise.resolve(null);
         }
+    }
+
+    function loadThemesFromBackend() {
+        if (typeof Millennium === 'undefined' || typeof Millennium.callServerMethod !== 'function') {
+            return Promise.resolve(null);
+        }
+        return Millennium.callServerMethod('luatools', 'GetThemes', { contentScriptQuery: '' }).then(function (res) {
+            try {
+                const payload = typeof res === 'string' ? JSON.parse(res) : res;
+                if (payload && payload.success && payload.themes) {
+                    _applyBackendThemes(payload.themes);
+                    return payload.themes;
+                }
+            } catch(_) {}
+            return null;
+        }).catch(function () { return null; });
+    }
+
+    function loadThemes() {
+        return Promise.all([
+            loadThemesFromFile(),
+            loadThemesFromBackend()
+        ]).catch(function () { /* ignore */ });
     }
 
     // Trigger load (non-blocking). Keeps DEFAULT_THEMES as a safe fallback.
@@ -753,7 +773,11 @@
     function getCurrentTheme() {
         try {
             const themeName = getCurrentThemeKey();
-            return THEMES[themeName] || THEMES.original;
+            const theme = THEMES[themeName] || THEMES.original;
+            if (!THEMES[themeName]) {
+                try { backendLog('LuaTools: Theme ' + themeName + ' not found in THEMES, using original. Available: ' + Object.keys(THEMES).join(', ')); } catch(_) {}
+            }
+            return theme;
         } catch (e) {
             return THEMES.original;
         }
@@ -939,14 +963,14 @@
 
         if (styleEl) {
             styleEl.textContent = styles;
-            return;
+        } else {
+            try {
+                const style = document.createElement('style');
+                style.id = 'luatools-styles';
+                style.textContent = styles;
+                document.head.appendChild(style);
+            } catch(err) { backendLog('LuaTools: Styles injection failed: ' + err); }
         }
-        try {
-            const style = document.createElement('style');
-            style.id = 'luatools-styles';
-            style.textContent = styles;
-            document.head.appendChild(style);
-        } catch(err) { backendLog('LuaTools: Styles injection failed: ' + err); }
     }
 
     function ensureFontAwesome() {
@@ -2763,12 +2787,14 @@
                             
                             // If theme changed, apply it immediately
                             if (group.key === 'general' && option.key === 'theme') {
+                                try { backendLog('LuaTools: Theme change detected, new value: ' + selectEl.value); } catch(_) {}
                                 // Update the settings cache so getCurrentTheme() returns the new value
                                 if (window.__LuaToolsSettings && window.__LuaToolsSettings.values) {
                                     if (!window.__LuaToolsSettings.values.general) {
                                         window.__LuaToolsSettings.values.general = {};
                                     }
                                     window.__LuaToolsSettings.values.general.theme = selectEl.value;
+                                    try { backendLog('LuaTools: Updated cache, theme is now: ' + window.__LuaToolsSettings.values.general.theme); } catch(_) {}
                                 }
                                 // Reload styles immediately
                                 ensureLuaToolsStyles();
@@ -2808,6 +2834,13 @@
                                     // Re-render the settings content
                                     renderSettings();
                                 }, 50);
+                                
+                                // Auto-save theme changes after a brief delay
+                                setTimeout(function() {
+                                    if (saveBtn && saveBtn.dataset.disabled !== '1' && saveBtn.dataset.busy !== '1') {
+                                        saveBtn.click();
+                                    }
+                                }, 150);
                             }
                             
                             updateSaveState();

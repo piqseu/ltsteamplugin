@@ -95,3 +95,6 @@ en.json
 .millennium/Dist/index.js
 .millennium/Dist/webkit.js
 /.millennium
+build.sh
+build.ps1
+BUILD.md
