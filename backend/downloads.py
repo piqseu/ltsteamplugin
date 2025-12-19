@@ -8,7 +8,8 @@ import os
 import re
 import threading
 import time
-from typing import Dict
+import datetime
+from typing import Any, Dict
 
 import Millennium  # type: ignore
 
@@ -27,7 +28,7 @@ from paths import backend_path, public_path
 from steam_utils import detect_steam_install_path, has_lua_for_app
 from utils import count_apis, ensure_temp_download_dir, normalize_manifest_text, read_text, write_text
 
-DOWNLOAD_STATE: Dict[int, Dict[str, any]] = {}
+DOWNLOAD_STATE: Dict[int, Dict[str, Any]] = {}
 DOWNLOAD_LOCK = threading.Lock()
 
 # Cache for app names to avoid repeated API calls
@@ -50,7 +51,7 @@ GAMES_DB_FILE_NAME = "games.json"
 GAMES_DB_URL = "https://toolsdb.piqseu.cc/games.json"
 
 # In-memory games database cache and lock (defined to avoid undefined variable)
-GAMES_DB_DATA: Dict[int, any] = {}
+GAMES_DB_DATA: Dict[int, Any] = {}
 GAMES_DB_LOADED = False
 GAMES_DB_LOCK = threading.Lock()
 
@@ -101,11 +102,15 @@ def _fetch_app_name(appid: int) -> str:
         return applist_name
 
     # Steam API as final resort (web request)
-    # Rate limiting: wait if needed
+    # Rate limiting: wait if needed (outside lock to avoid blocking other threads)
     with APP_NAME_CACHE_LOCK:
         time_since_last_call = time.time() - LAST_API_CALL_TIME
-        if time_since_last_call < API_CALL_MIN_INTERVAL:
-            time.sleep(API_CALL_MIN_INTERVAL - time_since_last_call)
+        sleep_time = API_CALL_MIN_INTERVAL - time_since_last_call if time_since_last_call < API_CALL_MIN_INTERVAL else 0
+    
+    if sleep_time > 0:
+        time.sleep(sleep_time)
+    
+    with APP_NAME_CACHE_LOCK:
         LAST_API_CALL_TIME = time.time()
 
     client = ensure_http_client("LuaTools: _fetch_app_name")
@@ -114,7 +119,7 @@ def _fetch_app_name(appid: int) -> str:
         resp = client.get(url, follow_redirects=True, timeout=10)
         resp.raise_for_status()
         data = resp.json()
-        entry = data.get(str(appid)) or data.get(int(appid)) or {}
+        entry = data.get(str(appid)) or {}
         if isinstance(entry, dict):
             inner = entry.get("data") or {}
             name = inner.get("name")
@@ -304,8 +309,6 @@ def _load_applist_into_memory() -> None:
 
 def _get_app_name_from_applist(appid: int) -> str:
     """Get app name from in-memory applist."""
-    global APPLIST_DATA, APPLIST_LOADED
-    
     # Ensure applist is loaded
     if not APPLIST_LOADED:
         _load_applist_into_memory()
@@ -421,8 +424,6 @@ def init_games_db() -> None:
 
 def get_games_database() -> str:
     """Get the games database as JSON string."""
-    global GAMES_DB_DATA, GAMES_DB_LOADED
-    
     if not GAMES_DB_LOADED:
         init_games_db()
     
@@ -824,13 +825,9 @@ def get_installed_lua_scripts() -> str:
                             game_name = APP_NAME_CACHE.get(appid, "")
 
                         # Fallback to loaded_apps file if not in cache
+                        # (_get_loaded_app_name also checks applist as fallback)
                         if not game_name:
                             game_name = _get_loaded_app_name(appid)
-
-                        # Fallback to applist if still not found (no web request)
-                        # Note: _get_loaded_app_name already checks applist, but check again here for clarity
-                        if not game_name:
-                            game_name = _get_app_name_from_applist(appid)
 
                         # Only use "Unknown Game" as last resort - don't fetch from API
                         if not game_name:
@@ -842,7 +839,6 @@ def get_installed_lua_scripts() -> str:
                         file_size = file_stat.st_size
 
                         # Format date
-                        import datetime
                         modified_time = datetime.datetime.fromtimestamp(file_stat.st_mtime)
                         formatted_date = modified_time.strftime("%Y-%m-%d %H:%M:%S")
 

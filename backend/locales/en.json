@@ -164,6 +164,15 @@
     "settings.title": "LuaTools · Settings",
     "settings.unsaved": "Unsaved changes",
     "{fix} applied successfully!": "{fix} applied successfully!",
-    "bigpicture.mouseTip": "To use mouse mode in Steam: Guide Button + Right Joystick, click with RB"
+    "bigpicture.mouseTip": "To use mouse mode in Steam: Guide Button + Right Joystick, click with RB",
+    "common.appName": "LuaTools",
+    "common.warning": "Warning",
+    "gameStatus.playable": "Playable",
+    "gameStatus.unplayable": "Unplayable",
+    "gameStatus.needsFixes": "Fix Available",
+    "gameStatus.denuvo": "Denuvo",
+    "settings.search.placeholder": "Search settings, games, fixes...",
+    "settings.search.clear": "Clear search",
+    "settings.search.noResults": "No matches found"
   }
 }

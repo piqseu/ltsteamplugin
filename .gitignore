@@ -1,10 +1,97 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.manifest
+*.spec
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Runtime / Generated Files (Backend)
+backend/data/
+backend/temp_dl/
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
 backend/appidlogs.txt
 backend/api.json
 backend/loadedappids.txt
-backend/loadedappids.txt
-backend/data/settings.json
+
+# Millennium Framework Generated Files
+.millennium/
+
+# Build Artifacts
+*.zip
+ltsteamplugin.zip
+update_pending.zip
+
+# Locale Scripts / Test Files
 backend/locales/check_indent.py
-backend/locales/test.json
 backend/locales/check_missing.py
+backend/locales/test.json
+
+# Package Scripts
 scripts/package.py
-backend/temp_dl/all-appids.json
+
+# Logs
+*.log
+logs/
+
+# Temporary Files
+*.tmp
+*.temp
+*.bak
+*.cache
+GAMEPAD-CHANGES.md
+GAMEPAD-SYSTEM.md
+en.json
+.millennium/Dist/index.js
+.millennium/Dist/webkit.js
+/.millennium

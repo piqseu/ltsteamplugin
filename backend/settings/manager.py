@@ -459,9 +459,6 @@ def apply_settings_changes(changes: Dict[str, Any]) -> Dict[str, Any]:
                 "message": "No-op",
             }
 
-        if errors:
-            return {"success": False, "errors": errors}
-
         _persist_values(updated)
         values_snapshot = copy.deepcopy(updated)
         language = str(values_snapshot.get("general", {}).get("language") or DEFAULT_LOCALE)
