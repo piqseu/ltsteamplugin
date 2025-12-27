@@ -4,7 +4,5 @@
   "common_name": "LuaTools",
   "description": "LuaTools Steam Plugin!",
   "version": "6.4.1",
-  "include": [
-    "public"
-  ]
+  "include": ["public"]
 }
