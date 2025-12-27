@@ -1,0 +1,50 @@
+:root {
+  --lt-bg-primary: #1a1b26;
+  --lt-bg-secondary: #1f2335;
+  --lt-bg-tertiary: rgba(26, 27, 38, 0.95);
+  --lt-bg-hover: rgba(31, 35, 53, 0.95);
+  --lt-bg-container: rgba(26, 27, 38, 0.8);
+  --lt-bg-container-gradient: rgba(26, 27, 38, 0.9), #1a1b26;
+  --lt-accent: #7aa2f7;
+  --lt-accent-light: #bb9af7;
+  --lt-accent-dark: #506fcf;
+  --lt-border: rgba(122, 162, 247, 0.35);
+  --lt-border-hover: rgba(122, 162, 247, 0.85);
+  --lt-text: #c0caf5;
+  --lt-text-secondary: #9aa5ce;
+  --lt-gradient: linear-gradient(135deg, #7aa2f7 0%, #bb9af7 100%);
+  --lt-gradient-light: linear-gradient(135deg, #9ece6a 0%, #7aa2f7 100%);
+  --lt-shadow: rgba(122, 162, 247, 0.4);
+  --lt-shadow-hover: rgba(122, 162, 247, 0.6);
+  --lt-shadow-rgba: rgba(122, 162, 247, 0.3);
+  --lt-rgb: 122, 162, 247;
+}
+
+/* Select dropdown styling for tokyo-night theme */
+select {
+  background-color: rgba(26, 27, 38, 0.95) !important;
+  color: #c0caf5 !important;
+  border: 1px solid rgba(122, 162, 247, 0.35) !important;
+  border-radius: 3px;
+}
+
+select option {
+  background-color: #1a1b26;
+  color: #c0caf5;
+}
+
+select option:checked {
+  background: linear-gradient(#7aa2f7, #7aa2f7);
+  background-color: #7aa2f7 !important;
+  color: #0f1221 !important;
+}
+
+select:hover {
+  border-color: rgba(122, 162, 247, 0.85) !important;
+}
+
+select:focus {
+  outline: none;
+  border-color: #7aa2f7 !important;
+  box-shadow: 0 0 0 2px rgba(122, 162, 247, 0.3);
+}

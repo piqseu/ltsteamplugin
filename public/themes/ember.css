@@ -1,0 +1,50 @@
+:root {
+  --lt-bg-primary: #120c0c;
+  --lt-bg-secondary: #1c1212;
+  --lt-bg-tertiary: rgba(18, 12, 12, 0.92);
+  --lt-bg-hover: rgba(28, 18, 18, 0.96);
+  --lt-bg-container: rgba(18, 12, 12, 0.8);
+  --lt-bg-container-gradient: rgba(18, 12, 12, 0.9), #120c0c;
+  --lt-accent: #ff914d;
+  --lt-accent-light: #ffb570;
+  --lt-accent-dark: #e86b1b;
+  --lt-border: rgba(255, 145, 77, 0.35);
+  --lt-border-hover: rgba(255, 145, 77, 0.8);
+  --lt-text: #ffe9dc;
+  --lt-text-secondary: #f6c9a3;
+  --lt-gradient: linear-gradient(135deg, #ffb570 0%, #ff914d 100%);
+  --lt-gradient-light: linear-gradient(135deg, #ffd0a3 0%, #ffb570 100%);
+  --lt-shadow: rgba(255, 145, 77, 0.35);
+  --lt-shadow-hover: rgba(255, 145, 77, 0.55);
+  --lt-shadow-rgba: rgba(255, 145, 77, 0.32);
+  --lt-rgb: 255, 145, 77;
+}
+
+/* Warm select styling for Ember */
+select {
+  background-color: rgba(18, 12, 12, 0.9) !important;
+  color: #ffe9dc !important;
+  border: 1px solid rgba(255, 145, 77, 0.35) !important;
+  border-radius: 3px;
+}
+
+select option {
+  background-color: #120c0c;
+  color: #ffe9dc;
+}
+
+select option:checked {
+  background: linear-gradient(#ff914d, #ff914d);
+  background-color: #ff914d !important;
+  color: #1c1212 !important;
+}
+
+select:hover {
+  border-color: rgba(255, 145, 77, 0.8) !important;
+}
+
+select:focus {
+  outline: none;
+  border-color: #ff914d !important;
+  box-shadow: 0 0 0 2px rgba(255, 145, 77, 0.25);
+}
