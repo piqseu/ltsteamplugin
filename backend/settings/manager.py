@@ -11,6 +11,59 @@ from paths import backend_path, get_plugin_dir
 
 from locales import DEFAULT_LOCALE, PLACEHOLDER_VALUE, get_locale_manager
 
+# Mapping from Steam registry language values to plugin locale codes.
+# Includes all Steam-supported languages. Languages without a matching
+# locale file will fall back to 'en' at runtime (checked against available locales).
+_STEAM_LANG_TO_LOCALE = {
+    "arabic": "ar",
+    "bulgarian": "bg",
+    "brazilian": "pt-BR",
+    "czech": "cz",
+    "danish": "da",
+    "dutch": "nl",
+    "english": "en",
+    "finnish": "fi",
+    "french": "fr",
+    "german": "de",
+    "greek": "el",
+    "hungarian": "hu",
+    "indonesian": "id",
+    "italian": "it",
+    "japanese": "jp",
+    "koreana": "ko",
+    "latam": "es",
+    "norwegian": "no",
+    "polish": "pl",
+    "portuguese": "pt",
+    "romanian": "ro",
+    "russian": "ru",
+    "schinese": "zh-CN",
+    "spanish": "es",
+    "swedish": "sv",
+    "tchinese": "zh-TW",
+    "thai": "th",
+    "turkish": "tr",
+    "ukrainian": "uk",
+    "vietnamese": "vi",
+}
+
+
+def _detect_steam_language() -> Optional[str]:
+    """Read Steam's UI language from the Windows registry and map it to a plugin locale code."""
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam") as key:
+            steam_lang, _ = winreg.QueryValueEx(key, "Language")
+            steam_lang = str(steam_lang).strip().lower()
+            locale_code = _STEAM_LANG_TO_LOCALE.get(steam_lang)
+            if locale_code:
+                logger.log(f"LuaTools: detected Steam language '{steam_lang}' -> locale '{locale_code}'")
+                return locale_code
+            logger.log(f"LuaTools: Steam language '{steam_lang}' has no matching locale, using default")
+    except Exception as exc:
+        logger.log(f"LuaTools: could not read Steam language from registry: {exc}")
+    return None
+
 from .options import (
     SETTINGS_GROUPS,
     SettingOption,
@@ -296,6 +349,16 @@ def _validate_option_value(option: SettingOption, value: Any) -> Tuple[bool, Any
     return True, value, None
 
 
+def init_settings() -> None:
+    """Eagerly load and cache settings (including language auto-detection).
+
+    Call during plugin boot, before Millennium.ready(), so the frontend
+    never has to fall back to a hardcoded default language.
+    """
+    with _SETTINGS_LOCK:
+        _load_settings_cache()
+
+
 def _load_settings_cache() -> Dict[str, Any]:
     global _SETTINGS_CACHE
     if _SETTINGS_CACHE is not None:
@@ -305,7 +368,25 @@ def _load_settings_cache() -> Dict[str, Any]:
     version = raw_data.get("version", 0)
     values = raw_data.get("values")
 
+    first_launch = not values  # No saved settings yet
+
     merged_values = merge_defaults_with_values(values)
+
+    # On first launch, try to detect Steam's UI language from the registry
+    # instead of defaulting to 'en'.
+    if first_launch:
+        detected = _detect_steam_language()
+        if detected:
+            available_codes = {loc["code"] for loc in _available_locale_codes()}
+            if detected in available_codes:
+                merged_values.setdefault("general", {})["language"] = detected
+                logger.log(f"LuaTools: first launch, auto-selected language '{detected}'")
+            else:
+                logger.log(
+                    f"LuaTools: detected locale '{detected}' not available "
+                    f"(have: {sorted(available_codes)}), using default"
+                )
+
     if version != SCHEMA_VERSION or merged_values != values:
         _write_settings_file({"version": SCHEMA_VERSION, "values": merged_values})
     _SETTINGS_CACHE = merged_values
