@@ -186,6 +186,10 @@
     "settings.theme.label": "Themed",
     "settings.title": "LooaToolz · Setinz (how spel??? halp)",
     "settings.unsaved": "u didnt clickeded savde yet dum dum hed",
-    "{fix} applied successfully!": "{fix} werkdeded!!! YAAAAAAAY GUD JERB ME SO SMAT!!!"
+    "{fix} applied successfully!": "{fix} werkdeded!!! YAAAAAAAY GUD JERB ME SO SMAT!!!",
+    "settings.useSteamLanguage.label": "Use Steam Language ong",
+    "settings.useSteamLanguage.description": "Use Steam client's language instead of LuaTools setting ngl fr.",
+    "settings.useSteamLanguage.yes": "YESSIR",
+    "settings.useSteamLanguage.no": "CAP"
   }
 }

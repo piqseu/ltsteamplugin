@@ -186,6 +186,10 @@
     "settings.theme.label": "Θέμα",
     "settings.title": "LuaTools · Ρυθμίσεις",
     "settings.unsaved": "Μη αποθηκευμένες αλλαγές",
-    "{fix} applied successfully!": "Το {fix} εφαρμόστηκε επιτυχώς!"
+    "{fix} applied successfully!": "Το {fix} εφαρμόστηκε επιτυχώς!",
+    "settings.useSteamLanguage.label": "Χρήση Γλώσσας Steam",
+    "settings.useSteamLanguage.description": "Χρησιμοποιήστε τη γλώσσα του πελάτη Steam αντί για τη ρύθμιση LuaTools.",
+    "settings.useSteamLanguage.yes": "Ναι",
+    "settings.useSteamLanguage.no": "Όχι"
   }
 }

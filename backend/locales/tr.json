@@ -186,6 +186,10 @@
     "settings.theme.label": "Tema",
     "settings.title": "LuaTools · Ayarlar",
     "settings.unsaved": "Kaydedilmemiş değişiklikler",
-    "{fix} applied successfully!": "{fix} başarıyla uygulandı!"
+    "{fix} applied successfully!": "{fix} başarıyla uygulandı!",
+    "settings.useSteamLanguage.label": "Steam Dilini Kullan",
+    "settings.useSteamLanguage.description": "LuaTools ayarı yerine Steam istemcisinin dilini kullanın.",
+    "settings.useSteamLanguage.yes": "Evet",
+    "settings.useSteamLanguage.no": "Hayır"
   }
 }

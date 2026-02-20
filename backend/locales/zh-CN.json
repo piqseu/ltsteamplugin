@@ -186,6 +186,10 @@
     "settings.theme.label": "主题",
     "settings.title": "LuaTools · 设置",
     "settings.unsaved": "未保存的更改",
-    "{fix} applied successfully!": "{fix}已成功应用！"
+    "{fix} applied successfully!": "{fix}已成功应用！",
+    "settings.useSteamLanguage.label": "使用 Steam 语言",
+    "settings.useSteamLanguage.description": "使用 Steam 客户端语言而不是 LuaTools 设置的语言。",
+    "settings.useSteamLanguage.yes": "是",
+    "settings.useSteamLanguage.no": "否"
   }
 }

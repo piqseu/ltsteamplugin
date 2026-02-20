@@ -186,6 +186,10 @@
     "settings.theme.label": "السمة",
     "settings.title": "LuaTools · الإعدادات",
     "settings.unsaved": "لم يتم الحفظ !",
-    "{fix} applied successfully!": "تم تطبيق {fix} بنجاح!"
+    "{fix} applied successfully!": "تم تطبيق {fix} بنجاح!",
+    "settings.useSteamLanguage.label": "استخدام لغة Steam",
+    "settings.useSteamLanguage.description": "استخدم لغة عميل Steam بدلاً من إعداد LuaTools.",
+    "settings.useSteamLanguage.yes": "نعم",
+    "settings.useSteamLanguage.no": "لا"
   }
 }

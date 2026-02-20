@@ -31,6 +31,14 @@ SETTINGS_GROUPS: List[SettingGroup] = [
         description="Global LuaTools preferences.",
         options=[
             SettingOption(
+                key="useSteamLanguage",
+                label="Use Steam Language",
+                option_type="toggle",
+                description="Use the Steam client's language for LuaTools.",
+                default=True,
+                metadata={"yesLabel": "Yes", "noLabel": "No"},
+            ),
+            SettingOption(
                 key="language",
                 label="Language",
                 option_type="select",
