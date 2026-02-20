@@ -4438,8 +4438,9 @@
         confirmBtn.style.opacity = '0.5';
         confirmBtn.style.pointerEvents = 'none';
 
+        var expectedPhrase = t('disclaimer.inputPlaceholder', 'I Understand').trim().toLowerCase();
         input.oninput = function() {
-            if (this.value.trim().toLowerCase() === 'i understand') {
+            if (this.value.trim().toLowerCase() === expectedPhrase) {
                 confirmBtn.style.opacity = '1';
                 confirmBtn.style.pointerEvents = 'auto';
                 confirmBtn.style.boxShadow = '0 0 15px rgba(102,192,244,0.4)';
@@ -4452,7 +4453,7 @@
 
         confirmBtn.onclick = function(e) {
             e.preventDefault();
-            if (input.value.trim().toLowerCase() === 'i understand') {
+            if (input.value.trim().toLowerCase() === expectedPhrase) {
                 localStorage.setItem('luatools millennium disclaimer accepted', '1');
                 overlay.remove();
             }
