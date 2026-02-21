@@ -29,7 +29,7 @@
     "Close": "Close",
     "Confirm": "Confirm",
     "DLC Detected": "DLC Detected",
-    "DLCs are added together with the base game. To add fixes for this DLC, please go to the base game page: <br><br><b>{gameName}</b>": "DLCs are added together with the base game. To add fixes for this DLC, please go to the base game page: <br><br><b>{gameName}</b>",
+    "DLCs are added together with the base game. To add fixes for this DLC, please go to the base game page: <br><br><b>{gameName}</b>": "DLCs are added together with the base game. To add this DLC, please go to the base game page: <br><br><b>{gameName}</b>",
     "Discord": "Discord",
     "Dismiss": "Dismiss",
     "Downloading...": "Downloading...",
@@ -186,6 +186,10 @@
     "settings.theme.label": "Theme",
     "settings.title": "LuaTools · Settings",
     "settings.unsaved": "Unsaved changes",
-    "{fix} applied successfully!": "{fix} applied successfully!"
+    "{fix} applied successfully!": "{fix} applied successfully!",
+    "settings.useSteamLanguage.label": "Use Steam Language",
+    "settings.useSteamLanguage.description": "Use the Steam client's language instead of LuaTools setting.",
+    "settings.useSteamLanguage.yes": "Yes",
+    "settings.useSteamLanguage.no": "No"
   }
 }

@@ -186,6 +186,10 @@
     "settings.theme.label": "Temă",
     "settings.title": "LuaTools · Setări",
     "settings.unsaved": "Modificări nesalvate",
-    "{fix} applied successfully!": "{fix} aplicat cu succes!"
+    "{fix} applied successfully!": "{fix} aplicat cu succes!",
+    "settings.useSteamLanguage.label": "Utilizați limba Steam",
+    "settings.useSteamLanguage.description": "Utilizați limba clientului Steam în loc de setarea LuaTools.",
+    "settings.useSteamLanguage.yes": "Da",
+    "settings.useSteamLanguage.no": "Nu"
   }
 }

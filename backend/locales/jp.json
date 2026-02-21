@@ -186,6 +186,10 @@
     "settings.theme.label": "テーマ",
     "settings.title": "LuaTools · 設定",
     "settings.unsaved": "未保存の変更",
-    "{fix} applied successfully!": "{fix}が正常に適用されました！"
+    "{fix} applied successfully!": "{fix}が正常に適用されました！",
+    "settings.useSteamLanguage.label": "Steam言語を使用",
+    "settings.useSteamLanguage.description": "LuaToolsの設定の代わりにSteamクライアントの言語を使用します。",
+    "settings.useSteamLanguage.yes": "はい",
+    "settings.useSteamLanguage.no": "いいえ"
   }
 }

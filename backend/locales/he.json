@@ -186,6 +186,10 @@
     "settings.theme.label": "נושא",
     "settings.title": "LuaTools · הגדרות",
     "settings.unsaved": "שינויים שלא נשמרו",
-    "{fix} applied successfully!": "{fix} הוחל בהצלחה!"
+    "{fix} applied successfully!": "{fix} הוחל בהצלחה!",
+    "settings.useSteamLanguage.label": "השתמש בשפת Steam",
+    "settings.useSteamLanguage.description": "השתמש בשפת הלקוח של Steam במקום בהגדרת LuaTools.",
+    "settings.useSteamLanguage.yes": "כן",
+    "settings.useSteamLanguage.no": "לא"
   }
 }

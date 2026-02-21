@@ -186,6 +186,10 @@
     "settings.theme.label": "Tema",
     "settings.title": "LuaTools · Pengaturan",
     "settings.unsaved": "Batalkan Perubahan",
-    "{fix} applied successfully!": "{fix} berhasil diterapkan!"
+    "{fix} applied successfully!": "{fix} berhasil diterapkan!",
+    "settings.useSteamLanguage.label": "Gunakan Bahasa Steam",
+    "settings.useSteamLanguage.description": "Gunakan bahasa klien Steam alih-alih pengaturan LuaTools.",
+    "settings.useSteamLanguage.yes": "Ya",
+    "settings.useSteamLanguage.no": "Tidak"
   }
 }
