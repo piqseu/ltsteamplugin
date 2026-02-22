@@ -48,8 +48,17 @@ _STEAM_LANG_TO_LOCALE = {
 }
 
 
+_detected_steam_lang: Optional[str] = None
+_detected_steam_lang_checked: bool = False
+
+
 def _detect_steam_language() -> Optional[str]:
-    """Read Steam's UI language from the Windows registry and map it to a plugin locale code."""
+    """Read Steam's UI language from the Windows registry and map it to a plugin locale code.
+    Result is cached for the lifetime of the process (Steam language doesn't change at runtime)."""
+    global _detected_steam_lang, _detected_steam_lang_checked
+    if _detected_steam_lang_checked:
+        return _detected_steam_lang
+    _detected_steam_lang_checked = True
     try:
         import winreg
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam") as key:
@@ -58,6 +67,7 @@ def _detect_steam_language() -> Optional[str]:
             locale_code = _STEAM_LANG_TO_LOCALE.get(steam_lang)
             if locale_code:
                 logger.log(f"LuaTools: detected Steam language '{steam_lang}' -> locale '{locale_code}'")
+                _detected_steam_lang = locale_code
                 return locale_code
             logger.log(f"LuaTools: Steam language '{steam_lang}' has no matching locale, using default")
     except Exception as exc:
@@ -423,8 +433,12 @@ def get_current_language() -> str:
     with _SETTINGS_LOCK:
         values = _get_values_locked()
         general = values.get("general") or {}
-        language = general.get("language") or DEFAULT_LOCALE
-        return str(language)
+        use_steam_lang = general.get("useSteamLanguage", True)
+        if use_steam_lang is not False:
+            detected = _detect_steam_language()
+            if detected:
+                return detected
+        return str(general.get("language") or DEFAULT_LOCALE)
 
 
 def get_morrenus_api_key() -> str:
@@ -446,7 +460,17 @@ def get_settings_payload() -> Dict[str, Any]:
 
     schema = _inject_locale_choices(get_settings_schema())
     locales = get_available_locales()
-    language = str(values_snapshot.get("general", {}).get("language") or DEFAULT_LOCALE)
+    general = values_snapshot.get("general") or {}
+    use_steam_lang = general.get("useSteamLanguage", True)
+    if use_steam_lang is not False:
+        detected = _detect_steam_language()
+        available_codes = {loc["code"] for loc in locales}
+        if detected and detected in available_codes:
+            language = detected
+        else:
+            language = str(general.get("language") or DEFAULT_LOCALE)
+    else:
+        language = str(general.get("language") or DEFAULT_LOCALE)
     translations = get_locale_manager().get_locale_strings(language)
 
     return {

@@ -1504,8 +1504,7 @@
         return t(text, text);
     }
 
-    // Preload translations asynchronously (no-op if backend unavailable)
-    ensureTranslationsLoaded(false);
+    // Translations are loaded by fetchSettingsConfig() in onFrontendReady — no separate preload needed.
 
     let settingsMenuPending = false;
 
@@ -4969,98 +4968,104 @@
                 }
             }
 
-            // status pills!! fire emoji
+            // status pills — only run once per appid
             try {
                 const match = window.location.href.match(/https:\/\/store\.steampowered\.com\/app\/(\d+)/) || window.location.href.match(/https:\/\/steamcommunity\.com\/app\/(\d+)/);
                 const appid = match ? parseInt(match[1], 10) : (window.__LuaToolsCurrentAppId || NaN);
 
                 if (!isNaN(appid)) {
-                    fetchGamesDatabase().then(function (db) {
-                        const btn = steamdbContainer.querySelector('.luatools-button');
-                        if (!btn) return;
+                    const pillBtn = steamdbContainer.querySelector('.luatools-button');
+                    if (pillBtn) {
+                        // Skip if pills already built for this appid
+                        var existingPills = pillBtn.querySelector('.luatools-pills-container');
+                        if (!(existingPills && existingPills.dataset.appid === String(appid) && existingPills.dataset.content)) {
+                            fetchGamesDatabase().then(function (db) {
+                                const btn = steamdbContainer.querySelector('.luatools-button');
+                                if (!btn) return;
 
-                        let pillsContainer = btn.querySelector('.luatools-pills-container');
+                                let pillsContainer = btn.querySelector('.luatools-pills-container');
 
-                        if (!pillsContainer) {
-                            pillsContainer = document.createElement('div');
-                            pillsContainer.className = 'luatools-pills-container';
-                            btn.appendChild(pillsContainer);
-                        }
+                                if (!pillsContainer) {
+                                    pillsContainer = document.createElement('div');
+                                    pillsContainer.className = 'luatools-pills-container';
+                                    btn.appendChild(pillsContainer);
+                                }
+                                pillsContainer.dataset.appid = String(appid);
 
-                        const key = String(appid);
-                        const gameData = (db && db[key]) ? db[key] : null;
+                                const key = String(appid);
+                                const gameData = (db && db[key]) ? db[key] : null;
 
-                        // check denuvo
-                        const drmNotice = document.querySelector('.DRM_notice');
-                        const hasDenuvo = drmNotice && drmNotice.textContent.includes('Denuvo');
+                                // check denuvo
+                                const drmNotice = document.querySelector('.DRM_notice');
+                                const hasDenuvo = drmNotice && drmNotice.textContent.includes('Denuvo');
 
-                        const fixesPromise = fetchFixes(appid);
+                                fetchFixes(appid).then(function (fixesData) {
+                                    const hasFixes = fixesData && (
+                                        (fixesData.genericFix && fixesData.genericFix.status === 200) ||
+                                        (fixesData.onlineFix && fixesData.onlineFix.status === 200)
+                                    );
+                                    const showDenuvoPill = hasDenuvo && !hasFixes;
 
-                        fixesPromise.then(function (fixesData) {
-                            const hasFixes = fixesData && (
-                                (fixesData.genericFix && fixesData.genericFix.status === 200) ||
-                                (fixesData.onlineFix && fixesData.onlineFix.status === 200)
-                            );
-                            const showDenuvoPill = hasDenuvo && !hasFixes;
+                                    const cacheKey = JSON.stringify({
+                                        d: gameData || 'untested',
+                                        showDenuvo: showDenuvoPill,
+                                        hasFixes: hasFixes
+                                    });
 
-                            const cacheKey = JSON.stringify({
-                                d: gameData || 'untested',
-                                showDenuvo: showDenuvoPill,
-                                hasFixes: hasFixes
+                                    if (pillsContainer.dataset.content === cacheKey) return;
+                                    pillsContainer.dataset.content = cacheKey;
+
+                                    pillsContainer.innerHTML = '';
+
+                                    let status = 'untested';
+                                    if (gameData && typeof gameData.playable !== 'undefined') {
+                                        if (gameData.playable === 1) status = 'playable';
+                                        else if (gameData.playable === 0) status = 'unplayable';
+                                        else if (gameData.playable === 2) status = 'needs_fixes';
+                                    }
+
+                                    if (status === 'untested' && hasFixes) {
+                                        status = 'needs_fixes';
+                                    }
+
+                                    if (status !== 'untested') {
+                                        const pill = document.createElement('span');
+                                        pill.className = 'luatools-pill';
+                                        if (status === 'playable') {
+                                            pill.classList.add('green');
+                                            pill.textContent = t('gameStatus.playable', 'Playable');
+                                        } else if (status === 'unplayable') {
+                                            pill.classList.add('red');
+                                            pill.textContent = t('gameStatus.unplayable', 'Unplayable');
+                                        } else if (status === 'needs_fixes') {
+                                            pill.classList.add('yellow');
+                                            pill.textContent = t('gameStatus.needsFixes', 'Needs fixes');
+                                        }
+                                        pillsContainer.appendChild(pill);
+                                    }
+
+                                    // reset button state
+                                    const btn = steamdbContainer.querySelector('.luatools-button');
+                                    if (btn) {
+                                        btn.style.opacity = '';
+                                        btn.style.pointerEvents = '';
+                                        btn.style.cursor = '';
+                                        const span = btn.querySelector('span');
+                                        if (span && span.textContent === 'Unplayable') {
+                                            span.textContent = lt('Add via LuaTools');
+                                        }
+                                    }
+
+                                    if (showDenuvoPill) {
+                                        const pill = document.createElement('span');
+                                        pill.className = 'luatools-pill orange';
+                                        pill.textContent = t('gameStatus.denuvo', 'Denuvo');
+                                        pillsContainer.appendChild(pill);
+                                    }
+                                });
                             });
-
-                            if (pillsContainer.dataset.content === cacheKey) return;
-                            pillsContainer.dataset.content = cacheKey;
-
-                            pillsContainer.innerHTML = '';
-
-                            let status = 'untested';
-                            if (gameData && typeof gameData.playable !== 'undefined') {
-                                if (gameData.playable === 1) status = 'playable';
-                                else if (gameData.playable === 0) status = 'unplayable';
-                                else if (gameData.playable === 2) status = 'needs_fixes';
-                            }
-
-                            if (status === 'untested' && hasFixes) {
-                                status = 'needs_fixes';
-                            }
-
-                            if (status !== 'untested') {
-                                const pill = document.createElement('span');
-                                pill.className = 'luatools-pill';
-                                if (status === 'playable') {
-                                    pill.classList.add('green');
-                                    pill.textContent = t('gameStatus.playable', 'Playable');
-                                } else if (status === 'unplayable') {
-                                    pill.classList.add('red');
-                                    pill.textContent = t('gameStatus.unplayable', 'Unplayable');
-                                } else if (status === 'needs_fixes') {
-                                    pill.classList.add('yellow');
-                                    pill.textContent = t('gameStatus.needsFixes', 'Needs fixes');
-                                }
-                                pillsContainer.appendChild(pill);
-                            }
-
-                            // reset button state
-                            const btn = steamdbContainer.querySelector('.luatools-button');
-                            if (btn) {
-                                btn.style.opacity = '';
-                                btn.style.pointerEvents = '';
-                                btn.style.cursor = '';
-                                const span = btn.querySelector('span');
-                                if (span && span.textContent === 'Unplayable') {
-                                    span.textContent = lt('Add via LuaTools');
-                                }
-                            }
-
-                            if (showDenuvoPill) {
-                                const pill = document.createElement('span');
-                                pill.className = 'luatools-pill orange';
-                                pill.textContent = t('gameStatus.denuvo', 'Denuvo');
-                                pillsContainer.appendChild(pill);
-                            }
-                        });
-                    });
+                        }
+                    }
                 }
             } catch (e) {
                 /* ignore */
@@ -5075,7 +5080,7 @@
 
     // Try to add the button immediately if DOM is ready
     function onFrontendReady() {
-        // Fetch settings on startup to ensure saved theme is applied across pages
+        // Fetch settings + translations FIRST, then insert the button once in the correct language
         try {
             fetchSettingsConfig(true).then(function (cfg) {
                 try {
@@ -5090,10 +5095,16 @@
                         }
                     }
                 } catch (_) { }
-            }).catch(function (_) { });
-        } catch (_) { }
 
-        addLuaToolsButton();
+                // Now translations are ready — insert the button in the correct language
+                addLuaToolsButton();
+            }).catch(function (_) {
+                // Settings failed, still insert button (English fallback)
+                addLuaToolsButton();
+            });
+        } catch (_) {
+            addLuaToolsButton();
+        }
 
         // Show gamepad hint if connected (only in Big Picture mode)
         setTimeout(function () {
