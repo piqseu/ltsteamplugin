@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 import os
 import threading
+import time
 import zipfile
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
 from downloads import fetch_app_name
 from http_client import ensure_http_client
@@ -19,6 +20,46 @@ FIX_DOWNLOAD_STATE: Dict[int, Dict[str, Any]] = {}
 FIX_DOWNLOAD_LOCK = threading.Lock()
 UNFIX_STATE: Dict[int, Dict[str, Any]] = {}
 UNFIX_LOCK = threading.Lock()
+
+# ── Fixes index cache (avoids HEAD requests to R2) ──────────────────────
+FIXES_INDEX_URL = "https://index.luatools.work/fixes-index.json"
+_fixes_index_lock = threading.Lock()
+_fixes_index_cache: Optional[Dict] = None
+_fixes_index_fetched_at: float = 0
+_FIXES_INDEX_TTL = 300  # seconds (5 min)
+
+
+def _fetch_fixes_index() -> Optional[Dict]:
+    """Fetch and cache the fixes index JSON. Returns None on failure."""
+    global _fixes_index_cache, _fixes_index_fetched_at
+    now = time.time()
+
+    with _fixes_index_lock:
+        if _fixes_index_cache is not None and (now - _fixes_index_fetched_at) < _FIXES_INDEX_TTL:
+            return _fixes_index_cache
+
+    # Fetch outside the lock to avoid blocking other threads
+    try:
+        client = ensure_http_client("LuaTools: FixesIndex")
+        resp = client.get(FIXES_INDEX_URL, follow_redirects=True, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            generic_set = set(data.get("genericFixes", []))
+            online_set = set(data.get("onlineFixes", []))
+            index = {"generic": generic_set, "online": online_set}
+            with _fixes_index_lock:
+                _fixes_index_cache = index
+                _fixes_index_fetched_at = time.time()
+            logger.log(f"LuaTools: Fixes index loaded ({len(generic_set)} generic, {len(online_set)} online)")
+            return index
+        else:
+            logger.warn(f"LuaTools: Fixes index fetch returned {resp.status_code}")
+    except Exception as exc:
+        logger.warn(f"LuaTools: Failed to fetch fixes index: {exc}")
+
+    # Return stale cache if available
+    with _fixes_index_lock:
+        return _fixes_index_cache
 
 
 def _is_safe_path(base_path: str, target_path: str) -> bool:
@@ -58,7 +99,6 @@ def check_for_fixes(appid: int) -> str:
     except Exception:
         return json.dumps({"success": False, "error": "Invalid appid"})
 
-    client = ensure_http_client("LuaTools: CheckForFixes")
     result = {
         "success": True,
         "appid": appid,
@@ -73,28 +113,50 @@ def check_for_fixes(appid: int) -> str:
         logger.warn(f"LuaTools: Failed to fetch game name for {appid}: {exc}")
         result["gameName"] = f"Unknown Game ({appid})"
 
-    try:
+    # Use the cached fixes index instead of HEAD requests to R2
+    index = _fetch_fixes_index()
+    if index is not None:
         generic_url = f"https://files.luatools.work/GameBypasses/{appid}.zip"
-        logger.log(f"LuaTools: Generic fix check ({generic_url}) for {appid}...")
-        resp = client.head(generic_url, follow_redirects=True, timeout=10)
-        logger.log(f"LuaTools: Generic fix check ({generic_url}) for {appid} -> {resp.status_code}")
-        result["genericFix"]["status"] = resp.status_code
-        result["genericFix"]["available"] = resp.status_code == 200
-        if resp.status_code == 200:
-            result["genericFix"]["url"] = generic_url
-    except Exception as exc:
-        logger.warn(f"LuaTools: Generic fix check failed for {appid}: {exc}")
-
-    try:
         online_url = f"https://files.luatools.work/OnlineFix1/{appid}.zip"
-        resp = client.head(online_url, follow_redirects=True, timeout=10)
-        logger.log(f"LuaTools: Online-fix check ({online_url}) for {appid} -> {resp.status_code}")
-        result["onlineFix"]["status"] = resp.status_code
-        result["onlineFix"]["available"] = resp.status_code == 200
-        if resp.status_code == 200:
+
+        if appid in index["generic"]:
+            result["genericFix"]["status"] = 200
+            result["genericFix"]["available"] = True
+            result["genericFix"]["url"] = generic_url
+        else:
+            result["genericFix"]["status"] = 404
+
+        if appid in index["online"]:
+            result["onlineFix"]["status"] = 200
+            result["onlineFix"]["available"] = True
             result["onlineFix"]["url"] = online_url
-    except Exception as exc:
-        logger.warn(f"LuaTools: Online-fix check failed for {appid}: {exc}")
+        else:
+            result["onlineFix"]["status"] = 404
+
+        logger.log(f"LuaTools: Fix check for {appid} via index: generic={appid in index['generic']}, online={appid in index['online']}")
+    else:
+        # Fallback: HEAD requests if index is unavailable
+        logger.warn(f"LuaTools: Fixes index unavailable, falling back to HEAD requests for {appid}")
+        client = ensure_http_client("LuaTools: CheckForFixes")
+        try:
+            generic_url = f"https://files.luatools.work/GameBypasses/{appid}.zip"
+            resp = client.head(generic_url, follow_redirects=True, timeout=10)
+            result["genericFix"]["status"] = resp.status_code
+            result["genericFix"]["available"] = resp.status_code == 200
+            if resp.status_code == 200:
+                result["genericFix"]["url"] = generic_url
+        except Exception as exc:
+            logger.warn(f"LuaTools: Generic fix check failed for {appid}: {exc}")
+
+        try:
+            online_url = f"https://files.luatools.work/OnlineFix1/{appid}.zip"
+            resp = client.head(online_url, follow_redirects=True, timeout=10)
+            result["onlineFix"]["status"] = resp.status_code
+            result["onlineFix"]["available"] = resp.status_code == 200
+            if resp.status_code == 200:
+                result["onlineFix"]["url"] = online_url
+        except Exception as exc:
+            logger.warn(f"LuaTools: Online-fix check failed for {appid}: {exc}")
 
     return json.dumps(result)
 

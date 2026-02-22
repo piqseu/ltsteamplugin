@@ -99,3 +99,8 @@ build.ps1
 BUILD.md
 
 readme
+.claude/settings.local.json
+.claude/settings.local.json
+/tools
+.claude/settings.local.json
+/.claude
