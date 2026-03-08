@@ -5252,42 +5252,33 @@
                         startPolling(appid);
                     };
 
-                    // First check if it's a DLC
-                    fetch('https://store.steampowered.com/api/appdetails?appids=' + appid + '&filters=basic')
-                        .then(function (res) {
-                            return res.json();
-                        })
-                        .then(function (data) {
-                            if (data && data[appid] && data[appid].success && data[appid].data) {
-                                const info = data[appid].data;
-                                if (info.type === 'dlc' && info.fullgame && info.fullgame.appid) {
-                                    showDlcWarning(appid, info.fullgame.appid, info.fullgame.name);
-                                    return;
-                                }
-                            }
+                    // Check if this is a dlc
+                    const isdlc = !!document.querySelector(".game_area_dlc_bubble");
+                    const parentdiv = document.querySelector('.glance_details a[href*="/app/"]')
 
-                            // Not a DLC (or failed to check), proceed with database check
-                            return fetchGamesDatabase().then(function (db) {
-                                try {
-                                    const key = String(appid);
-                                    const gameData = db && db[key] ? db[key] : null;
-                                    if (gameData && gameData.playable === 0) {
-                                        // warning modal
-                                        showLuaToolsPlayableWarning('This game may not work, support for it wont be given in our discord', function () {
-                                            continueWithAdd();
-                                        }, function () { });
-                                    } else {
+                    if (isdlc && parentdiv) {
+                        const id = parseInt(parentdiv.href.match(/app\/(\d+)\//)?.[1] ?? "")
+                        const name = parentdiv.innerText ?? "name not found";
+
+                        showDlcWarning(appid, id, name);
+                    } else {
+                        // Not a dlc (or failed) ? Then continue normally
+                        return fetchGamesDatabase().then(function (db) {
+                            try {
+                                const gameData = db?.[String(appid)] ?? null;
+                                if (gameData?.playable === 0) {
+                                    // warning modal
+                                    showLuaToolsPlayableWarning('This game may not work, support for it wont be given in our discord', function () {
                                         continueWithAdd();
-                                    }
-                                } catch (_) {
+                                    }, function () { });
+                                } else {
                                     continueWithAdd();
                                 }
-                            });
-                        })
-                        .catch(function (err) {
-                            backendLog('LuaTools: DLC check failed: ' + err);
-                            continueWithAdd();
+                            } catch (_) {
+                                continueWithAdd();
+                            }
                         });
+                    }
                 }
             } catch (_) { }
         }
