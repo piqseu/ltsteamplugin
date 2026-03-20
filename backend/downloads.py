@@ -33,9 +33,12 @@ from utils import count_apis, ensure_temp_download_dir, normalize_manifest_text,
 DOWNLOAD_STATE: Dict[int, Dict[str, Any]] = {}
 DOWNLOAD_LOCK = threading.Lock()
 
-# Cache for app names to avoid repeated API calls
+# Cache for app names and infos to avoid repeated API calls
 APP_NAME_CACHE: Dict[int, str] = {}
 APP_NAME_CACHE_LOCK = threading.Lock()
+
+APP_INFO_CACHE: Dict = {}
+APP_INFO_CACHE_LOCK = threading.Lock()
 
 # Rate limiting for Steam API calls
 LAST_API_CALL_TIME = 0
@@ -139,6 +142,56 @@ def _fetch_app_name(appid: int) -> str:
     with APP_NAME_CACHE_LOCK:
         APP_NAME_CACHE[appid] = ""
     return ""
+
+
+def _fetch_app_info(appid: int) -> dict:
+    """Fetch app info from steamcmd with caching.
+    
+    Fallback order:
+    1. In-memory cache
+    2. Steamcmd.net (request)
+    """
+    global LAST_API_CALL_TIME
+
+    # Check cache first
+    with APP_INFO_CACHE_LOCK:
+        if appid in APP_INFO_CACHE:
+            cached = APP_INFO_CACHE[appid]
+            if cached:  # Only return if not empty
+                return cached
+
+    client = ensure_http_client("LuaTools: _fetch_app_info")
+    try:
+        url = f"https://api.steamcmd.net/v1/info/{appid}"
+        logger.log(f"LuaTools: Fetching app info for {appid} from steamcmd.net")
+        resp = client.get(url, follow_redirects=True, timeout=10)
+        logger.log(f"LuaTools: steamcmd.net response for {appid}: status={resp.status_code}")
+        resp.raise_for_status()
+
+        data = resp.json().get("data", {})
+
+        if isinstance(data, dict):
+            root = data.get(str(appid), {})
+
+            depots = root.get("depots", {})
+            extended = root.get("extended", {})
+
+            output = {
+                "workshop_depot": depots.get("workshopdepot", 0),
+                "dlc_list": extended.get("listofdlc", "")
+            }
+
+            # Cache the result
+            with APP_INFO_CACHE_LOCK:
+                APP_INFO_CACHE[appid] = output
+            return output
+    except Exception as exc:
+        logger.warn(f"LuaTools: _fetch_app_info failed for {appid}: {exc}")
+
+    # Cache empty result to avoid repeated failed attempts
+    with APP_INFO_CACHE_LOCK:
+        APP_INFO_CACHE[appid] = {}
+    return {}
 
 
 def _append_loaded_app(appid: int, name: str) -> None:
@@ -462,6 +515,10 @@ def get_games_database() -> str:
 def fetch_app_name(appid: int) -> str:
     return _fetch_app_name(appid)
 
+def fetch_app_info(appid: int) -> str:
+    return json.dumps(_fetch_app_info(appid))
+
+
 
 def _process_and_install_lua(appid: int, zip_path: str) -> None:
     """Process downloaded zip and install lua file into stplug-in directory."""
@@ -523,10 +580,15 @@ def _process_and_install_lua(appid: int, zip_path: str) -> None:
             text = data.decode("utf-8", errors="replace")
 
         processed_lines = []
+        depots = []
         for line in text.splitlines(True):
             if re.match(r"^\s*setManifestid\(", line) and not re.match(r"^\s*--", line):
                 line = re.sub(r"^(\s*)", r"\1--", line)
             processed_lines.append(line)
+            if re.match(r"^\s*addappid\(", line) and not re.match(r"^\s*--", line):
+                if (m := re.search(r"\d+", line)):
+                    depots.append(int(m.group()))
+            
         processed_text = "".join(processed_lines)
 
         _set_download_state(appid, {"status": "installing"})
@@ -537,6 +599,47 @@ def _process_and_install_lua(appid: int, zip_path: str) -> None:
             output.write(processed_text)
         logger.log(f"LuaTools: Installed lua -> {dest_file}")
         _set_download_state(appid, {"installedPath": dest_file})
+
+        # Check .lua content
+        try:
+            if _is_download_cancelled(appid):
+                raise RuntimeError("cancelled")
+            
+            info = _fetch_app_info(appid)
+            
+            # Workshop presence
+            if info.get("workshop_depot", 0) == 0:
+                workshop_result = "No workshop for the game ✅"
+            else:
+                # Ugly ass regex
+                if re.match(rf"^\s*addappid\(\s*{appid}\s*,\s*\d+\s*,\s*\"", processed_text):
+                    workshop_result = "Included 🎉"
+                else:
+                    workshop_result = "Missing ❌"
+            
+            # Dlc listing
+            dlc_result = { "included": [], "missing": [] }
+            if info.get("dlc_list", "") != "":
+                dlcs = info.get("dlc_list").split(",")
+
+                for dlc in dlcs:
+                    if int(dlc) in depots:
+                        dlc_result["included"].append(int(dlc))
+                    else:
+                        dlc_result["missing"].append(int(dlc))
+
+            _set_download_state(appid, {
+                "status": "done",
+                "contentCheckResult": {
+                    "workshop": workshop_result,
+                    "dlc": dlc_result
+                }
+            })
+
+
+        except Exception as exc:
+            logger.error(f"LuaTools: Error checking lua for app {appid}: {exc}")
+            _set_download_state(appid, {"status": "done"})
 
     try:
         os.remove(zip_path)
@@ -941,6 +1044,7 @@ __all__ = [
     "delete_luatools_for_app",
     "dismiss_loaded_apps",
     "fetch_app_name",
+    "fetch_app_info",
     "get_add_status",
     "get_games_database",
     "get_icon_data_url",

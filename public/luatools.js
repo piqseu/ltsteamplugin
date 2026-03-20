@@ -1506,6 +1506,20 @@
 
     // Translations are loaded by fetchSettingsConfig() in onFrontendReady — no separate preload needed.
 
+    function askRestartConfirmation() {
+        showLuaToolsConfirm('LuaTools', lt('Restart Steam now?'),
+            function () {
+                try {
+                    Millennium.callServerMethod('luatools', 'RestartSteam', {
+                        contentScriptQuery: ''
+                    });
+                    // SteamClient.User.StartRestart(true) Unreliable, closes but doesn't restart (on my pc)
+                } catch (_) { }
+            },
+            function () { /* Cancel - do nothing */ }
+        );
+    }
+
     let settingsMenuPending = false;
 
     // Helper: show a Steam-style popup with a 10s loading bar (custom UI)
@@ -4731,31 +4745,9 @@
                         try {
                             // Ensure any settings overlays are closed before confirm
                             closeSettingsOverlay();
-                            showLuaToolsConfirm('LuaTools', lt('Restart Steam now?'),
-                                function () {
-                                    try {
-                                        Millennium.callServerMethod('luatools', 'RestartSteam', {
-                                            contentScriptQuery: ''
-                                        });
-                                    } catch (_) { }
-                                },
-                                function () {
-                                    /* Cancel - do nothing */
-                                }
-                            );
+                            askRestartConfirmation()
                         } catch (_) {
-                            showLuaToolsConfirm('LuaTools', lt('Restart Steam now?'),
-                                function () {
-                                    try {
-                                        Millennium.callServerMethod('luatools', 'RestartSteam', {
-                                            contentScriptQuery: ''
-                                        });
-                                    } catch (_) { }
-                                },
-                                function () {
-                                    /* Cancel - do nothing */
-                                }
-                            );
+                            askRestartConfirmation()
                         }
                     });
 
@@ -5173,16 +5165,7 @@
 
                             if (isUpdateMsg) {
                                 // For update messages, use confirm dialog with OK (restart) and Cancel options
-                                showLuaToolsConfirm('LuaTools', msg, function () {
-                                    // User clicked Confirm - restart Steam
-                                    try {
-                                        Millennium.callServerMethod('luatools', 'RestartSteam', {
-                                            contentScriptQuery: ''
-                                        });
-                                    } catch (_) { }
-                                }, function () {
-                                    // User clicked Cancel - do nothing (just closes dialog)
-                                });
+                                askRestartConfirmation()
                             } else {
                                 // For non-update messages, use regular alert
                                 ShowLuaToolsAlert('LuaTools', msg);
