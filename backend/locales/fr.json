@@ -203,7 +203,7 @@
     "Select Download Source": "Choisir la source de téléchargement",
     "Initializing download...": "Initialisation du téléchargement...",
     "Loading APIs...": "Chargement des API...",
-    "This game may not work, support for it wont be given in our discord": "Ce jeu peut ne pas fonctionner, aucun support ne sera donné sur notre discord",
+    "This game may not work, support for it wont be given in our discord": "Ce jeu peut possiblement ne pas fonctionner, aucun support ne sera donné sur notre discord",
     "settings.fastDownload.label": "Téléchargement rapide",
     "settings.fastDownload.description": "Choisir automatiquement la première source disponible lors de l'ajout d'un jeu."
   }
