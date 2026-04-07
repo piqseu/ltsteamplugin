@@ -6493,7 +6493,15 @@
                             // exhausted usages or expired API key
                             showLuaToolsPlayableWarning(
                                 lt("You have exceeded your daily download limit or your Morrenus API key is expired. Please wait until tomorrow for more uses, or regenerate your key on the Morrenus website."),
-                                null, 
+                                function() { showSettingsManagerPopup(false, null); },
+                                null
+                            );
+                            runState.inProgress = false;
+                        } else if (res && res.detail === "API key not found or expired") {
+                            // 401 - invalid or expired key
+                            showLuaToolsPlayableWarning(
+                                lt("Your Morrenus API key is invalid or expired. Please check your key in the settings or regenerate it on the Morrenus website."),
+                                function() { showSettingsManagerPopup(false, null); },
                                 null
                             );
                             runState.inProgress = false;
