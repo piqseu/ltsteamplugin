@@ -6489,18 +6489,26 @@
                   Millennium.callServerMethod("luatools", "GetMorrenusStats", { api_key: morrenusKey, force_refresh: true, contentScriptQuery: "" })
                     .then(r => typeof r === "string" ? JSON.parse(r) : r)
                     .then(res => {
-                        if (res && res.can_make_requests === false) {
-                            // exhausted usages or expired API key
+                        if (res && res.detail === "API key not found or expired") {
+                            // 401 - invalid or expired key
                             showLuaToolsPlayableWarning(
-                                lt("You have exceeded your daily download limit or your Morrenus API key is expired. Please wait until tomorrow for more uses, or regenerate your key on the Morrenus website."),
+                                lt("Your Morrenus API key is invalid or expired. Please check your key in the settings or regenerate it on the Morrenus website."),
                                 function() { showSettingsManagerPopup(false, null); },
                                 null
                             );
                             runState.inProgress = false;
-                        } else if (res && res.detail === "API key not found or expired") {
-                            // 401 - invalid or expired key
+                        } else if (res && typeof res.detail === "string" && res.detail.startsWith("Daily limit reached")) {
+                            // 429 - daily limit exhausted
                             showLuaToolsPlayableWarning(
-                                lt("Your Morrenus API key is invalid or expired. Please check your key in the settings or regenerate it on the Morrenus website."),
+                                lt("You have exceeded your daily download limit. Please wait until tomorrow for more uses, or upgrade your plan on the Morrenus website."),
+                                function() { showSettingsManagerPopup(false, null); },
+                                null
+                            );
+                            runState.inProgress = false;
+                        } else if (res && typeof res.daily_usage !== "undefined" && typeof res.daily_limit !== "undefined" && res.daily_usage >= res.daily_limit) {
+                            // usage fields show limit reached (fallback)
+                            showLuaToolsPlayableWarning(
+                                lt("You have exceeded your daily download limit. Please wait until tomorrow for more uses, or upgrade your plan on the Morrenus website."),
                                 function() { showSettingsManagerPopup(false, null); },
                                 null
                             );
