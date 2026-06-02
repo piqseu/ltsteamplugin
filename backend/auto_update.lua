@@ -83,25 +83,27 @@ function auto_update.check_for_updates_now()
     
     local pending_zip = paths.backend_path(config.UPDATE_PENDING_ZIP)
     
-    local dl_resp = http_client.get(zip_url, { timeout = 30 })
-    if dl_resp and dl_resp.status == 200 and dl_resp.body then
-        m_utils.write_file(pending_zip, dl_resp.body)
-        
-        local is_windows = m_utils.getenv("OS") == "Windows_NT"
-        local cmd
-        if is_windows then
-            cmd = 'powershell -Command "Expand-Archive -Force -Path \'' .. pending_zip .. '\' -DestinationPath \'' .. paths.get_plugin_dir() .. '\'"'
-        else
-            cmd = 'unzip -o -q "' .. pending_zip .. '" -d "' .. paths.get_plugin_dir() .. '"'
-        end
-        m_utils.exec(cmd)
-        fs.remove(pending_zip)
-        
-        local msg = "LuaTools updated to " .. latest_version .. ". Please restart Steam."
-        return { success = true, message = msg }
+    local is_windows = m_utils.getenv("OS") == "Windows_NT"
+    local cmd
+    if is_windows then
+        local ps1_path = fs.join(paths.get_plugin_dir(), "backend", "scripts", "downloader.ps1")
+        local temp_ps1 = fs.join(paths.get_backend_dir(), "temp_updater.ps1")
+        m_utils.write_file(temp_ps1, m_utils.read_file(ps1_path))
+        cmd = string.format('powershell -ExecutionPolicy Bypass -Command "& \'%s\' -Url \'%s\' -DestPath \'%s\' -ExtractDir \'%s\'"', temp_ps1, zip_url, pending_zip, paths.get_plugin_dir())
+    else
+        cmd = string.format('curl -L -o "%s" "%s" && unzip -o -q "%s" -d "%s"', pending_zip, zip_url, pending_zip, paths.get_plugin_dir())
     end
     
-    return { success = false, error = "Update download failed" }
+    m_utils.exec(cmd)
+    
+    if fs.exists(pending_zip) then fs.remove(pending_zip) end
+    if is_windows then
+        local temp_ps1 = fs.join(paths.get_backend_dir(), "temp_updater.ps1")
+        if fs.exists(temp_ps1) then fs.remove(temp_ps1) end
+    end
+    
+    local msg = "LuaTools updated to " .. latest_version .. ". Please restart Steam."
+    return { success = true, message = msg }
 end
 
 function auto_update.restart_steam()
