@@ -4709,7 +4709,8 @@
                 const response =
                   typeof res === "string" ? JSON.parse(res) : res;
                 if (!response || !response.success) {
-                  alert(
+                  ShowLuaToolsAlert(
+                    "Error",
                     t(
                       "settings.installedFixes.deleteError",
                       "Failed to remove fix.",
@@ -4728,7 +4729,8 @@
                 pollUnfixStatus(fix.appid, itemEl, fixDeleteBtn, container);
               })
               .catch(function (err) {
-                alert(
+                ShowLuaToolsAlert(
+                  "Error",
                   t(
                     "settings.installedFixes.deleteError",
                     "Failed to remove fix.",
@@ -4757,7 +4759,8 @@
 
       function checkStatus() {
         if (pollCount >= maxPolls) {
-          alert(
+          ShowLuaToolsAlert(
+            "Error",
             t("settings.installedFixes.deleteError", "Failed to remove fix.") +
               " (Timeout)",
           );
@@ -4814,7 +4817,8 @@
               status === "failed" ||
               (status === "done" && !state.success)
             ) {
-              alert(
+              ShowLuaToolsAlert(
+                "Error",
                 t(
                   "settings.installedFixes.deleteError",
                   "Failed to remove fix.",
@@ -4869,7 +4873,11 @@
         .then(function(res) {
           const payload = typeof res === "string" ? JSON.parse(res) : res;
           if (!payload || !payload.success || !Array.isArray(payload.apis)) {
-            alert("Payload error in GetAllApis: " + JSON.stringify(payload));
+            ShowLuaToolsAlert(
+              "Error",
+              (payload && payload.error) ||
+                t("settings.apiToggles.error", "Failed to load APIs."),
+            );
             listEl.innerHTML = `<div style="color:#ff5c5c;font-size:13px;padding:10px;">${t("settings.apiToggles.error", "Failed to load APIs.")}</div>`;
             return;
           }
@@ -4917,10 +4925,16 @@
                   .then(function(r) {
                     const rp = typeof r === "string" ? JSON.parse(r) : r;
                     if (!rp || !rp.success) {
-                        alert("ReorderApis Failed: " + JSON.stringify(rp));
+                        ShowLuaToolsAlert(
+                          "Error",
+                          (rp && rp.error) ||
+                            t("settings.apiToggles.error", "Failed to load APIs."),
+                        );
                     }
                   })
-                  .catch(function(err){ alert("ReorderApis Error: " + err); });
+                  .catch(function(err) {
+                    ShowLuaToolsAlert("Error", String(err));
+                  });
             });
             row.addEventListener('dragover', function(e) {
                 e.preventDefault();
@@ -5041,13 +5055,17 @@
                 .then(function(r) {
                   const rp = typeof r === "string" ? JSON.parse(r) : r;
                   if (!rp || !rp.success) {
-                    alert("ToggleApi Failed: " + JSON.stringify(rp));
+                    ShowLuaToolsAlert(
+                      "Error",
+                      (rp && rp.error) ||
+                        t("settings.apiToggles.error", "Failed to load APIs."),
+                    );
                     pill.dataset.enabled = nowEnabled ? "0" : "1";
                     pill.style.background = nowEnabled ? "rgba(255,255,255,0.15)" : getThemeColors().accent;
                     knob.style.left = nowEnabled ? "3px" : "22px";
                   }
                 }).catch(function(err) {
-                  alert("ToggleApi Error: " + err);
+                  ShowLuaToolsAlert("Error", String(err));
                   pill.dataset.enabled = nowEnabled ? "0" : "1";
                   pill.style.background = nowEnabled ? "rgba(255,255,255,0.15)" : getThemeColors().accent;
                   knob.style.left = nowEnabled ? "3px" : "22px";
@@ -5079,12 +5097,16 @@
                     row.style.transform = "translateX(10px)";
                     setTimeout(function() { row.remove(); }, 200);
                   } else {
-                    alert("RemoveApi Failed: " + JSON.stringify(rp));
+                    ShowLuaToolsAlert(
+                      "Error",
+                      (rp && rp.error) ||
+                        t("settings.apiToggles.error", "Failed to load APIs."),
+                    );
                     delBtn.dataset.busy = "0";
                     delBtn.style.opacity = "1";
                   }
                 }).catch(function(err) {
-                  alert("RemoveApi Error: " + err);
+                  ShowLuaToolsAlert("Error", String(err));
                   delBtn.dataset.busy = "0";
                   delBtn.style.opacity = "1";
                 });
@@ -5131,7 +5153,7 @@
           sectionEl.appendChild(addBtnRow);
         })
         .catch(function(err) {
-          alert("GetAllApis Catch Error: " + err);
+          ShowLuaToolsAlert("Error", String(err));
           listEl.innerHTML = `<div style="color:#ff5c5c;font-size:13px;padding:10px;">${t("settings.apiToggles.error", "Failed to load APIs.")}</div>`;
         });
     }
@@ -5394,7 +5416,8 @@
                 const response =
                   typeof res === "string" ? JSON.parse(res) : res;
                 if (!response || !response.success) {
-                  alert(
+                  ShowLuaToolsAlert(
+                    "Error",
                     t(
                       "settings.installedLua.deleteError",
                       "Failed to remove Lua script.",
@@ -5423,7 +5446,8 @@
                 }, 300);
               })
               .catch(function (err) {
-                alert(
+                ShowLuaToolsAlert(
+                  "Error",
                   t(
                     "settings.installedLua.deleteError",
                     "Failed to remove Lua script.",
